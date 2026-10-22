@@ -138,7 +138,7 @@ class DtrController extends Controller
 
 public function sendBulkEmails(Request $request)
     {
-        set_time_limit(300); // Prevent timeouts for heavy PDF generation
+        set_time_limit(300); // Prevent timeouts
 
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
@@ -164,40 +164,54 @@ public function sendBulkEmails(Request $request)
 
             if ($employees->isEmpty()) continue;
 
-            $allDtrs = [];
+            $allDtrs = []; 
             foreach ($employees as $employee) {
                 $allDtrs[] = $this->generateDtrData($employee->id, $year, $month, true);
             }
 
-            // 🌟 1. Render the beautiful Tailwind Blade view into a string of HTML
+            // 1. Render the Tailwind Blade view into a string of HTML
             $html = view('dtr.print_bulk', [
-                'allDtrs' => $allDtrs,
-                'department' => $dept->name,
-                'month' => $month,
+                'allDtrs' => $allDtrs, 
+                'department' => $dept->name, 
+                'month' => $month, 
                 'year' => $year
             ])->render();
 
-            // 🌟 2. Use Browsershot (Chrome) to take a snapshot and turn it into a PDF
-            // Note: If Windows complains it can't find Node, uncomment the setNodeBinary line below
-            $pdfContent = \Spatie\Browsershot\Browsershot::html($html)
-                        ->format('Legal')
-                        ->margins(10, 10, 10, 10)
-                        ->showBackground() // Keeps your Tailwind background colors!
-                        // ->setNodeBinary('C:\Program Files\nodejs\node.exe')
-                        // ->setNpmBinary('C:\Program Files\nodejs\npm.cmd')
-                        ->pdf();
+            // 2. Send the HTML to API2PDF (Headless Chrome)
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => env('API2PDF_KEY'),
+                'Content-Type'  => 'application/json',
+            ])->post('https://v2.api2pdf.com/chrome/pdf/html', [
+                'html' => $html,
+                'inline' => true,
+                'options' => [
+                    'format' => 'Legal',
+                    'printBackground' => true,
+                    'marginTop' => 0.4,
+                    'marginBottom' => 0.4,
+                    'marginLeft' => 0.4,
+                    'marginRight' => 0.4,
+                ]
+            ]);
 
-            // 🌟 3. Send Email
-            \Illuminate\Support\Facades\Mail::to($dept->email)
-                ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
+            // 3. Download the PDF and attach it to the email
+            if ($response->successful()) {
+                $pdfUrl = $response->json('FileUrl');
+                $pdfContent = \Illuminate\Support\Facades\Http::get($pdfUrl)->body();
 
-            $emailsSent++;
+                \Illuminate\Support\Facades\Mail::to($dept->email)
+                    ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
+                    
+                $emailsSent++;
+            } else {
+                return back()->withErrors(['PDF API Error: Could not generate the document for ' . $dept->name]);
+            }
         }
 
         if ($emailsSent > 0) {
             return back()->with('success', "Successfully sent $emailsSent department email(s)!");
         } else {
-            return back()->withErrors(['Could not find employees for the selected departments.']);
+            return back()->withErrors(['Could not process the DTRs successfully.']);
         }
     }
 
