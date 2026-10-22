@@ -177,16 +177,16 @@ public function sendBulkEmails(Request $request)
                 'year' => $year
             ])->render();
 
-            // 2. Send the HTML to DOCZILLA (Headless Chrome)
+           // 2. Send the HTML to DOCZILLA (Headless Chrome)
             $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('API2PDF_KEY'), // Doczilla requires "Bearer " in front
+                'Authorization' => 'Bearer ' . env('API2PDF_KEY'),
                 'Content-Type'  => 'application/json',
             ])->post('https://api.doczilla.app/v1/pdf', [
                 'page' => [
-                    'html' => base64_encode($html) // Doczilla securely reads Base64 strings
+                    'html' => base64_encode($html)
                 ],
                 'pdf' => [
-                    'format' => 'Legal',
+                    'format' => 'legal', // 🌟 Changed from 'Legal' to 'legal'
                     'printBackground' => true,
                     'margin' => [
                         'top' => '0.4in',
@@ -197,9 +197,8 @@ public function sendBulkEmails(Request $request)
                 ]
             ]);
 
-            // 3. Attach the Doczilla PDF directly to the email
+           // 3. Attach the Doczilla PDF directly to the email
             if ($response->successful()) {
-                // Doczilla instantly returns the raw PDF binary directly!
                 $pdfContent = $response->body(); 
 
                 \Illuminate\Support\Facades\Mail::to($dept->email)
@@ -207,8 +206,8 @@ public function sendBulkEmails(Request $request)
                     
                 $emailsSent++;
             } else {
-                $errorMessage = $response->json('message') ?? $response->body();
-                return back()->withErrors(["Doczilla API Error for {$dept->name}: " . $errorMessage]);
+                // 🌟 FIX: Force Laravel to print the ENTIRE JSON error body 🌟
+                return back()->withErrors(["Doczilla API Error for {$dept->name}: " . $response->body()]);
             }
         }
 
