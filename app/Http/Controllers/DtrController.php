@@ -200,13 +200,21 @@ public function sendBulkEmails(Request $request)
            // 3. Attach the Doczilla PDF directly to the email
             if ($response->successful()) {
                 $pdfContent = $response->body(); 
+                
+                // 🌟 FIX: Strictly validate the email address before sending 🌟
+                $recipientEmail = trim($dept->email);
 
-                \Illuminate\Support\Facades\Mail::to($dept->email)
-                    ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
-                    
-                $emailsSent++;
+                if (!empty($recipientEmail) && filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                    \Illuminate\Support\Facades\Mail::to($recipientEmail)
+                        ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
+                        
+                    $emailsSent++;
+                } else {
+                    // Alert you if a department has a broken email address
+                    return back()->withErrors(["PDF generated, but could not send to {$dept->name} because their email address is missing or invalid in the database."]);
+                }
+                
             } else {
-                // 🌟 FIX: Force Laravel to print the ENTIRE JSON error body 🌟
                 return back()->withErrors(["Doczilla API Error for {$dept->name}: " . $response->body()]);
             }
         }
