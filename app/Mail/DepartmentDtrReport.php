@@ -28,17 +28,12 @@ class DepartmentDtrReport extends Mailable
         $monthName = date('F', mktime(0, 0, 0, $this->month, 1));
         $fileName = "DTR_{$this->deptName}_{$monthName}_{$this->year}.pdf";
 
-        return $this->subject("Monthly DTR Report - {$this->deptName} ({$monthName} {$this->year})")
+        return $this->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
+                    ->replyTo(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
+                    ->subject("Official DTR Report - {$this->deptName} ({$monthName} {$this->year})")
                     ->view('emails.department_dtr')
                     ->attachData($this->pdfContent, $fileName, [
                         'mime' => 'application/pdf',
                     ]);
     }
-
-    public function envelope(): Envelope
-{
-    return new Envelope(
-        subject: 'Official DTR Report - ' . $this->department . ' (' . $this->month . '/' . $this->year . ')',
-    );
-}
 }
