@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # 1. Forward all website traffic directly to Laravel's public folder
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# 2. BLOCK ACCESS TO SENSITIVE FILES (CRITICAL FOR GITHUB DEPLOYS)
+<FilesMatch "(\.env|\.git|\.htaccess|composer\.json|composer\.lock|package\.json|package-lock\.json|artisan)">
+    Require all denied
+</FilesMatch>
+
+# 3. BLOCK ACCESS TO BACKEND DIRECTORIES
+<DirectoryMatch "^(app|bootstrap|config|database|resources|routes|storage|tests|vendor)">
+    Require all denied
+</DirectoryMatch>
