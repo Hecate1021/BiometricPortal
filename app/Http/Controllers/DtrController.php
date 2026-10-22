@@ -178,9 +178,10 @@ public function sendBulkEmails(Request $request)
             ])->render();
 
             // 2. Send the HTML to API2PDF (Headless Chrome)
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => env('API2PDF_KEY'),
+          $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'doczilla-v_Q6ay_RM31Ib4bzZZORK', // 🌟 Hardcoded for testing 🌟
                 'Content-Type'  => 'application/json',
+            
             ])->post('https://v2.api2pdf.com/chrome/pdf/html', [
                 'html' => $html,
                 'inline' => true,
