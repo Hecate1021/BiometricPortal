@@ -177,18 +177,17 @@ public function sendBulkEmails(Request $request)
                 'year' => $year
             ])->render();
 
-            // 2. Send the HTML to API2PDF (Headless Chrome)
-          $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'doczilla-v_Q6ay_RM31Ib4bzZZORK', // 🌟 Hardcoded for testing 🌟
+            // 2. Send the HTML to DOCZILLA (Headless Chrome)
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('API2PDF_KEY'), // Doczilla requires "Bearer " in front
                 'Content-Type'  => 'application/json',
-            
-            ])->post('https://v2.api2pdf.com/chrome/pdf/html', [
-                'html' => $html,
-                'inline' => true,
-                'options' => [
+            ])->post('https://api.doczilla.app/v1/pdf', [
+                'page' => [
+                    'html' => base64_encode($html) // Doczilla securely reads Base64 strings
+                ],
+                'pdf' => [
                     'format' => 'Legal',
                     'printBackground' => true,
-                    // 🌟 Fixed Margin Formatting for API2PDF 🌟
                     'margin' => [
                         'top' => '0.4in',
                         'bottom' => '0.4in',
@@ -198,19 +197,18 @@ public function sendBulkEmails(Request $request)
                 ]
             ]);
 
-            // 3. Download the PDF and attach it to the email
+            // 3. Attach the Doczilla PDF directly to the email
             if ($response->successful()) {
-                $pdfUrl = $response->json('FileUrl');
-                $pdfContent = \Illuminate\Support\Facades\Http::get($pdfUrl)->body();
+                // Doczilla instantly returns the raw PDF binary directly!
+                $pdfContent = $response->body(); 
 
                 \Illuminate\Support\Facades\Mail::to($dept->email)
                     ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
                     
                 $emailsSent++;
             } else {
-                // 🌟 Added detailed error reporting so we can see exactly what the API rejected 🌟
-                $errorMessage = $response->json('reason') ?? $response->body();
-                return back()->withErrors(["PDF API Error for {$dept->name}: " . $errorMessage]);
+                $errorMessage = $response->json('message') ?? $response->body();
+                return back()->withErrors(["Doczilla API Error for {$dept->name}: " . $errorMessage]);
             }
         }
 
