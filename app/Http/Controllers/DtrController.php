@@ -187,10 +187,13 @@ public function sendBulkEmails(Request $request)
                 'options' => [
                     'format' => 'Legal',
                     'printBackground' => true,
-                    'marginTop' => 0.4,
-                    'marginBottom' => 0.4,
-                    'marginLeft' => 0.4,
-                    'marginRight' => 0.4,
+                    // 🌟 Fixed Margin Formatting for API2PDF 🌟
+                    'margin' => [
+                        'top' => '0.4in',
+                        'bottom' => '0.4in',
+                        'left' => '0.4in',
+                        'right' => '0.4in',
+                    ]
                 ]
             ]);
 
@@ -204,7 +207,9 @@ public function sendBulkEmails(Request $request)
                     
                 $emailsSent++;
             } else {
-                return back()->withErrors(['PDF API Error: Could not generate the document for ' . $dept->name]);
+                // 🌟 Added detailed error reporting so we can see exactly what the API rejected 🌟
+                $errorMessage = $response->json('reason') ?? $response->body();
+                return back()->withErrors(["PDF API Error for {$dept->name}: " . $errorMessage]);
             }
         }
 
