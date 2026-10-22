@@ -34,4 +34,11 @@ class DepartmentDtrReport extends Mailable
                         'mime' => 'application/pdf',
                     ]);
     }
+
+    public function envelope(): Envelope
+{
+    return new Envelope(
+        subject: 'Official DTR Report - ' . $this->department . ' (' . $this->month . '/' . $this->year . ')',
+    );
+}
 }
