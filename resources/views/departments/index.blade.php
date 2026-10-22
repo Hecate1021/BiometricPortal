@@ -74,10 +74,10 @@
                                 </td>
                                 <td class="p-4 md:p-5 text-right space-x-4 whitespace-nowrap flex items-center justify-end">
                                     <button type="button" 
-                                        onclick="openEditModal({{ $dept->id }}, '{{ $dept->name }}', '{{ $dept->email }}', {{ $dept->required_punches }})"
-                                        class="font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
-                                    </button>
+    onclick="openEditModal({{ $dept->id }}, '{{ addslashes($dept->name) }}', '{{ $dept->email }}', {{ $dept->required_punches ?? 4 }})"
+    class="font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
+</button>
                                     
                                     <form action="{{ route('departments.destroy', $dept->id) }}" method="POST" class="inline-block m-0" onsubmit="return confirm('Are you sure? Employees currently in this department will be marked as Unassigned.');">
                                         @csrf @method('DELETE')
