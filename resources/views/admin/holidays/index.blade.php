@@ -47,7 +47,7 @@
                                 <option value="regular">Regular Holiday (Full Day)</option>
                                 <option value="special">Special Non-Working (Full Day)</option>
                                 <option value="suspension">Work Suspension (Calamity/Half-day)</option>
-                                <option value="suspension">Work From Home (Full Day)</option>
+                                <option value="special">Work From Home (Full Day)</option>
                             </select>
                         </div>
 
