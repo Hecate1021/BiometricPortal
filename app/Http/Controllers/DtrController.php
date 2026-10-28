@@ -136,11 +136,7 @@ class DtrController extends Controller
 
     public function sendBulkEmails(Request $request)
     {
-<<<<<<< HEAD
         set_time_limit(300);
-=======
-        set_time_limit(300); // Prevent timeouts
->>>>>>> 2c9e1f9eb3049dedffba476f40eaa5d00a9c6f44
 
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
@@ -166,23 +162,18 @@ class DtrController extends Controller
 
             if ($employees->isEmpty()) continue;
 
-            $allDtrs = []; 
+            $allDtrs = [];
             foreach ($employees as $employee) {
                 $allDtrs[] = $this->generateDtrData($employee->id, $year, $month, true);
             }
 
-<<<<<<< HEAD
-=======
-            // 1. Render the Tailwind Blade view into a string of HTML
->>>>>>> 2c9e1f9eb3049dedffba476f40eaa5d00a9c6f44
             $html = view('dtr.print_bulk', [
-                'allDtrs' => $allDtrs, 
-                'department' => $dept->name, 
-                'month' => $month, 
+                'allDtrs' => $allDtrs,
+                'department' => $dept->name,
+                'month' => $month,
                 'year' => $year
             ])->render();
 
-<<<<<<< HEAD
             $pdfContent = \Spatie\Browsershot\Browsershot::html($html)
                         ->format('Legal')
                         ->margins(10, 10, 10, 10)
@@ -191,54 +182,14 @@ class DtrController extends Controller
 
             \Illuminate\Support\Facades\Mail::to($dept->email)
                 ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
-=======
-           // 2. Send the HTML to DOCZILLA (Headless Chrome)
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('API2PDF_KEY'),
-                'Content-Type'  => 'application/json',
-            ])->post('https://api.doczilla.app/v1/pdf', [
-                'page' => [
-                    'html' => base64_encode($html)
-                ],
-                'pdf' => [
-                    'format' => 'legal', // 🌟 Changed from 'Legal' to 'legal'
-                    'printBackground' => true,
-                    'margin' => [
-                        'top' => '0.4in',
-                        'bottom' => '0.4in',
-                        'left' => '0.4in',
-                        'right' => '0.4in',
-                    ]
-                ]
-            ]);
 
-           // 3. Attach the Doczilla PDF directly to the email
-            if ($response->successful()) {
-                $pdfContent = $response->body(); 
-                
-                // 🌟 FIX: Strictly validate the email address before sending 🌟
-                $recipientEmail = trim($dept->email);
->>>>>>> 2c9e1f9eb3049dedffba476f40eaa5d00a9c6f44
-
-                if (!empty($recipientEmail) && filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
-                    \Illuminate\Support\Facades\Mail::to($recipientEmail)
-                        ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
-                        
-                    $emailsSent++;
-                } else {
-                    // Alert you if a department has a broken email address
-                    return back()->withErrors(["PDF generated, but could not send to {$dept->name} because their email address is missing or invalid in the database."]);
-                }
-                
-            } else {
-                return back()->withErrors(["Doczilla API Error for {$dept->name}: " . $response->body()]);
-            }
+            $emailsSent++;
         }
 
         if ($emailsSent > 0) {
             return back()->with('success', "Successfully sent $emailsSent department email(s)!");
         } else {
-            return back()->withErrors(['Could not process the DTRs successfully.']);
+            return back()->withErrors(['Could not find employees for the selected departments.']);
         }
     }
 
