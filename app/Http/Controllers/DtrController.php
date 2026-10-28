@@ -197,8 +197,11 @@ class DtrController extends Controller
             ]);
 
             if ($response->failed()) {
-                \Illuminate\Support\Facades\Log::error("Doczilla PDF API failed for " . $dept->name . ": " . $response->body());
-                continue; // Skip this department so the loop doesn't crash for others
+                // This will halt the server and print the exact Doczilla error to your screen
+                dd([
+                    'HTTP_STATUS' => $response->status(),
+                    'DOCZILLA_ERROR' => $response->json() ?? $response->body()
+                ]);
             }
 
             // 🌟 3. Extract the raw binary PDF file returned directly by the API
