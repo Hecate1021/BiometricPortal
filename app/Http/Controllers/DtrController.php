@@ -18,8 +18,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\DepartmentDtrReport;
 use Spatie\Browsershot\Browsershot;
 
-
-
 class DtrController extends Controller
 {
     // ==============================================================
@@ -136,9 +134,13 @@ class DtrController extends Controller
         return view('dtr.print_bulk', compact('allDtrs', 'department', 'month', 'year'));
     }
 
-public function sendBulkEmails(Request $request)
+    public function sendBulkEmails(Request $request)
     {
+<<<<<<< HEAD
+        set_time_limit(300);
+=======
         set_time_limit(300); // Prevent timeouts
+>>>>>>> 2c9e1f9eb3049dedffba476f40eaa5d00a9c6f44
 
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
@@ -169,7 +171,10 @@ public function sendBulkEmails(Request $request)
                 $allDtrs[] = $this->generateDtrData($employee->id, $year, $month, true);
             }
 
+<<<<<<< HEAD
+=======
             // 1. Render the Tailwind Blade view into a string of HTML
+>>>>>>> 2c9e1f9eb3049dedffba476f40eaa5d00a9c6f44
             $html = view('dtr.print_bulk', [
                 'allDtrs' => $allDtrs, 
                 'department' => $dept->name, 
@@ -177,6 +182,16 @@ public function sendBulkEmails(Request $request)
                 'year' => $year
             ])->render();
 
+<<<<<<< HEAD
+            $pdfContent = \Spatie\Browsershot\Browsershot::html($html)
+                        ->format('Legal')
+                        ->margins(10, 10, 10, 10)
+                        ->showBackground()
+                        ->pdf();
+
+            \Illuminate\Support\Facades\Mail::to($dept->email)
+                ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
+=======
            // 2. Send the HTML to DOCZILLA (Headless Chrome)
             $response = \Illuminate\Support\Facades\Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('API2PDF_KEY'),
@@ -203,6 +218,7 @@ public function sendBulkEmails(Request $request)
                 
                 // 🌟 FIX: Strictly validate the email address before sending 🌟
                 $recipientEmail = trim($dept->email);
+>>>>>>> 2c9e1f9eb3049dedffba476f40eaa5d00a9c6f44
 
                 if (!empty($recipientEmail) && filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
                     \Illuminate\Support\Facades\Mail::to($recipientEmail)
@@ -287,7 +303,14 @@ public function sendBulkEmails(Request $request)
         $logCount = 0;
 
         foreach ($users as $biometricId => $name) {
-            $employee = Employee::firstOrNew(['biometric_id' => $biometricId]);
+            $employee = Employee::where('biometric_id', $biometricId)
+                                ->orWhere('secondary_biometric_id', $biometricId)
+                                ->first();
+
+            if (!$employee) {
+                $employee = new Employee(['biometric_id' => $biometricId]);
+            }
+
             $employee->name = $name;
 
             if (!$employee->exists || empty($employee->company_id)) {
@@ -299,7 +322,9 @@ public function sendBulkEmails(Request $request)
         }
 
         foreach ($logs as $log) {
-            $employee = Employee::where('biometric_id', $log['id'])->first();
+            $employee = Employee::where('biometric_id', $log['id'])
+                                ->orWhere('secondary_biometric_id', $log['id'])
+                                ->first();
 
             if ($employee) {
                 $timestamp = $log['date'] . ' ' . $log['time'];
@@ -334,9 +359,15 @@ public function sendBulkEmails(Request $request)
 
         $zktecoIds = collect($logs)->pluck('id')->map(fn($id) => trim((string)$id))->unique()->toArray();
 
-        $employeeMap = Employee::whereIn('biometric_id', $zktecoIds)
-            ->pluck('id', 'biometric_id')
-            ->toArray();
+        $employees = Employee::whereIn('biometric_id', $zktecoIds)
+                             ->orWhereIn('secondary_biometric_id', $zktecoIds)
+                             ->get();
+
+        $employeeMap = [];
+        foreach ($employees as $emp) {
+            if (!empty($emp->biometric_id)) $employeeMap[$emp->biometric_id] = $emp->id;
+            if (!empty($emp->secondary_biometric_id)) $employeeMap[$emp->secondary_biometric_id] = $emp->id;
+        }
 
         $internalIds = array_values($employeeMap);
         $searchIds = array_unique(array_merge($zktecoIds, $internalIds));
@@ -376,7 +407,7 @@ public function sendBulkEmails(Request $request)
     // ==============================================================
     // 4. PRIVATE HELPERS (The Core Math Engine)
     // ==============================================================
-private function generateDtrData($employeeId, $year, $month, $isPrint = false)
+    private function generateDtrData($employeeId, $year, $month, $isPrint = false)
     {
         $employee = \App\Models\Employee::findOrFail($employeeId);
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
@@ -450,7 +481,6 @@ private function generateDtrData($employeeId, $year, $month, $isPrint = false)
                 $remarkId = 'leave_' . $leave->id;
                 $remarkDetails = $isPrint ? ['form_number' => $leave->type, 'purpose' => $leave->office_department, 'route' => ''] : null;
             } elseif ($holiday) {
-                // 🌟 FIX: Only merge the row for FULL holidays. Do NOT merge for partial suspensions.
                 if ($holiday->type !== 'suspension') {
                     $remark = strtoupper($holiday->name);
                     $remarkId = 'holiday_' . $holiday->id;
@@ -468,7 +498,7 @@ private function generateDtrData($employeeId, $year, $month, $isPrint = false)
 
             $amIn = $amOut = $pmIn = $pmOut = null;
             $lateMinutes = $earlyMinutes = $totalMinutes = 0;
-            $autoAmOut = $autoPmOut = false; // Track if we auto-filled due to calamity
+            $autoAmOut = $autoPmOut = false;
 
             if ($requiredPunches == 2) {
                 $dayShifts = array_filter($pairedFlexibleShifts, fn($s) => $s['date'] == $dateStr);
@@ -521,18 +551,15 @@ private function generateDtrData($employeeId, $year, $month, $isPrint = false)
                 $shiftAmStart = Carbon::parse($dateStr . ' 08:00:00'); $shiftAmEnd = Carbon::parse($dateStr . ' 12:00:00');
                 $shiftPmStart = Carbon::parse($dateStr . ' 13:00:00'); $shiftPmEnd = Carbon::parse($dateStr . ' 17:00:00');
 
-                // 🌟 CALAMITY / SUSPENSION LOGIC 🌟
                 if ($holiday && $holiday->type === 'suspension' && $holiday->time_suspended) {
                     $suspendTime = Carbon::parse($dateStr . ' ' . $holiday->time_suspended);
 
                     if ($suspendTime <= $shiftAmEnd) {
                         $shiftAmEnd = $suspendTime;
                         $shiftPmStart = $shiftPmEnd = $suspendTime;
-                        // Auto-fill out punch if they rushed home
                         if ($amIn && !$amOut) { $amOut = $suspendTime->copy(); $autoAmOut = true; }
                     } else {
                         $shiftPmEnd = $suspendTime;
-                        // Auto-fill out punch if they rushed home
                         if ($pmIn && !$pmOut) { $pmOut = $suspendTime->copy(); $autoPmOut = true; }
                     }
                 }
@@ -567,7 +594,6 @@ private function generateDtrData($employeeId, $year, $month, $isPrint = false)
                 }
             }
 
-            // 🌟 FORCE FULL CREDIT FOR SUSPENSION DAYS (Avoid Undertime) 🌟
             if ($holiday && $holiday->type === 'suspension' && $holiday->time_suspended) {
                 if ($amIn || $pmIn) {
                     $totalMinutes = 480 - $lateMinutes - $earlyMinutes;
@@ -590,13 +616,11 @@ private function generateDtrData($employeeId, $year, $month, $isPrint = false)
                 if ($totalMinutes > 0 || $remark) $renDaysCount++;
             }
 
-            // 🌟 EXEMPT STRING FORMATTING 🌟
             $amInStr = $amIn ? $amIn->format($isPrint ? 'H:i' : 'h:i A') : '';
             $amOutStr = $amOut ? ($autoAmOut ? 'EXEMPT' : $amOut->format($isPrint ? 'H:i' : 'h:i A')) : '';
             $pmInStr = $pmIn ? $pmIn->format($isPrint ? 'H:i' : 'h:i A') : '';
             $pmOutStr = $pmOut ? ($autoPmOut ? 'EXEMPT' : $pmOut->format($isPrint ? 'H:i' : 'h:i A')) : '';
 
-            // Automatically label missing punches as EXEMPT based on suspension time
             if ($holiday && $holiday->type === 'suspension' && $holiday->time_suspended) {
                 $sTimeStr = Carbon::parse($holiday->time_suspended)->format('H:i');
 
@@ -756,6 +780,4 @@ private function generateDtrData($employeeId, $year, $month, $isPrint = false)
 
         return redirect()->back()->with('success', $msg);
     }
-
-
 }

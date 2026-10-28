@@ -13,7 +13,8 @@ class Employee extends Model
         'company_id',
         'name',
         'biometric_id',
-        'department', 
+        'secondary_biometric_id',
+        'department',
         'position',
         'is_hidden' // <--- ADD THIS
     ];
@@ -22,7 +23,7 @@ class Employee extends Model
     {
         return $this->hasMany(AttendanceLog::class);
     }
-    
+
     public function leaves()
     {
         return $this->hasMany(Leave::class);

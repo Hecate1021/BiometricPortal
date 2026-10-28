@@ -12,7 +12,7 @@
     </style>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6">
-        
+
         <!-- Header & Add Button -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
             <div>
@@ -109,11 +109,11 @@
                         </tr>
 
                         <!-- ========================================== -->
-                        <!-- ✏️ EDIT MODAL (Generated for each row)       -->
+                        <!-- ✏️ EDIT MODAL (Generated for each row)      -->
                         <!-- ========================================== -->
                         <div id="editEmployeeModal-{{ $employee->id }}" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden flex items-center justify-center z-[60] p-4 sm:p-6 overflow-y-auto">
                             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl transform transition-all my-auto max-h-[95vh] flex flex-col">
-                                
+
                                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-blue-50 shrink-0 rounded-t-2xl">
                                     <h3 class="font-bold text-blue-800 text-lg flex items-center gap-2">
                                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -121,12 +121,12 @@
                                     </h3>
                                     <button type="button" onclick="closeModal('editEmployeeModal-{{ $employee->id }}')" class="text-slate-400 hover:text-slate-600">&times;</button>
                                 </div>
-                                
+
                                 <div class="overflow-y-auto p-6 flex-1">
                                     <form id="editForm-{{ $employee->id }}" action="{{ route('employees.update', $employee->id) }}" method="POST" class="space-y-5 needs-validation" novalidate>
                                         @csrf
                                         @method('PUT')
-                                        
+
                                         <div>
                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Full Name <span class="text-rose-500">*</span></label>
                                             <input type="text" name="name" value="{{ old('name', $employee->name) }}" required class="w-full bg-white border border-slate-300 rounded-lg shadow-sm p-3 focus:ring-blue-500 text-sm font-bold text-slate-800">
@@ -141,6 +141,12 @@
                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">ZKTeco Biometric ID</label>
                                                 <input type="text" name="biometric_id" value="{{ old('biometric_id', $employee->biometric_id) }}" placeholder="e.g. 150" class="w-full bg-slate-50 border border-slate-300 rounded-lg shadow-sm p-3 focus:ring-blue-500 font-mono text-sm">
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Secondary Biometric ID (Optional)</label>
+                                            <input type="text" name="secondary_biometric_id" value="{{ old('secondary_biometric_id', $employee->secondary_biometric_id) }}" placeholder="e.g. 2025032" class="w-full text-sm font-medium border-slate-300 rounded-xl shadow-sm focus:ring-blue-500 p-3 bg-slate-50 focus:bg-white transition-colors">
+                                            <p class="text-[10px] text-slate-400 mt-1.5 leading-tight font-medium">Use if the employee is registered on a second physical device with a different ID.</p>
                                         </div>
 
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-5 mt-5">
@@ -171,7 +177,7 @@
                         </div>
 
                         <!-- ========================================== -->
-                        <!-- 🗑️ DELETE MODAL (Generated for each row)     -->
+                        <!-- 🗑️ DELETE MODAL (Generated for each row)    -->
                         <!-- ========================================== -->
                         <div id="deleteEmployeeModal-{{ $employee->id }}" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden flex items-center justify-center z-[60] p-4">
                             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all text-center p-6">
@@ -180,7 +186,7 @@
                                 </div>
                                 <h3 class="text-lg font-black text-slate-800 mb-2">Remove Employee?</h3>
                                 <p class="text-sm text-slate-500 mb-6">Are you sure you want to remove <strong>{{ $employee->name }}</strong>? Their old DTR records will be preserved, but they will be hidden from the active list.</p>
-                                
+
                                 <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" class="flex gap-3 justify-center">
                                     @csrf
                                     @method('DELETE')
@@ -206,7 +212,7 @@
     <!-- ============================================== -->
     <div id="addEmployeeModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden flex items-center justify-center z-[60] p-4 sm:p-6 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl transform transition-all my-auto max-h-[95vh] flex flex-col">
-            
+
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50 shrink-0 rounded-t-2xl">
                 <h3 class="font-bold text-emerald-800 text-lg flex items-center gap-2">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
@@ -214,11 +220,11 @@
                 </h3>
                 <button type="button" onclick="closeModal('addEmployeeModal')" class="text-slate-400 hover:text-slate-600">&times;</button>
             </div>
-            
+
             <div class="overflow-y-auto p-6 flex-1">
                 <form id="addEmployeeForm" action="{{ route('employees.store') }}" method="POST" class="space-y-5 needs-validation" novalidate>
                     @csrf
-                    
+
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Full Name <span class="text-rose-500">*</span></label>
                         <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. Juan Dela Cruz" required class="w-full bg-white border border-slate-300 rounded-lg shadow-sm p-3 focus:ring-emerald-500 text-sm font-bold text-slate-800">
@@ -233,6 +239,13 @@
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">ZKTeco Biometric ID</label>
                             <input type="text" name="biometric_id" value="{{ old('biometric_id') }}" placeholder="e.g. 150" class="w-full bg-slate-50 border border-slate-300 rounded-lg shadow-sm p-3 focus:ring-emerald-500 font-mono text-sm">
                         </div>
+
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Secondary Biometric ID (Optional)</label>
+                        <input type="text" name="secondary_biometric_id" value="{{ old('secondary_biometric_id') }}" placeholder="e.g. 2025032" class="w-full text-sm font-medium border-slate-300 rounded-xl shadow-sm focus:ring-emerald-500 p-3 bg-slate-50 focus:bg-white transition-colors">
+                        <p class="text-[10px] text-slate-400 mt-1.5 leading-tight font-medium">Use if the employee is registered on a second physical device with a different ID.</p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-5 mt-5">
@@ -276,7 +289,7 @@
                     rows.forEach(row => {
                         // Get all text content inside this specific row
                         const rowText = row.innerText.toLowerCase();
-                        
+
                         // Show or hide the row based on the search
                         if (rowText.includes(searchTerm)) {
                             row.style.display = '';
@@ -319,13 +332,13 @@
                 const errorAlert = document.getElementById('error-alert');
                 if (successAlert) {
                     successAlert.style.opacity = '0';
-                    setTimeout(() => successAlert.remove(), 500); 
+                    setTimeout(() => successAlert.remove(), 500);
                 }
                 if (errorAlert) {
                     errorAlert.style.opacity = '0';
-                    setTimeout(() => errorAlert.remove(), 500); 
+                    setTimeout(() => errorAlert.remove(), 500);
                 }
-            }, 5000); 
+            }, 5000);
         });
     </script>
 </x-employee-layout>
