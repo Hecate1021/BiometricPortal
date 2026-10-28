@@ -11,12 +11,14 @@ use App\Models\PassSlip;
 use App\Models\Department;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use App\Models\Holiday;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Mail\DepartmentDtrReport;
-use Spatie\Browsershot\Browsershot;
+use App\Jobs\GenerateAndSendDtrPdf;
 
 class DtrController extends Controller
 {
@@ -39,20 +41,20 @@ class DtrController extends Controller
     public function bulkHide(Request $request)
     {
         if (empty($request->employee_ids)) return back();
-        \App\Models\Employee::whereIn('id', $request->employee_ids)->update(['is_hidden' => true]);
+        Employee::whereIn('id', $request->employee_ids)->update(['is_hidden' => true]);
         return back()->with('success', count($request->employee_ids) . ' employees successfully hidden.');
     }
 
     public function bulkUnhide(Request $request)
     {
         if (empty($request->employee_ids)) return back();
-        \App\Models\Employee::whereIn('id', $request->employee_ids)->update(['is_hidden' => false]);
+        Employee::whereIn('id', $request->employee_ids)->update(['is_hidden' => false]);
         return back()->with('success', count($request->employee_ids) . ' employees successfully unhidden.');
     }
 
     public function unhide($id)
     {
-        $employee = \App\Models\Employee::findOrFail($id);
+        $employee = Employee::findOrFail($id);
         $employee->update(['is_hidden' => false]);
         return back()->with('success', $employee->name . ' is now visible in the system.');
     }
@@ -134,16 +136,16 @@ class DtrController extends Controller
         return view('dtr.print_bulk', compact('allDtrs', 'department', 'month', 'year'));
     }
 
-   public function sendBulkEmails(Request $request)
+    public function sendBulkEmails(Request $request)
     {
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
         $departmentParam = $request->input('department');
 
         if ($departmentParam === 'All') {
-            $departments = \App\Models\Department::whereNotNull('email')->where('email', '!=', '')->get();
+            $departments = Department::whereNotNull('email')->where('email', '!=', '')->get();
         } else {
-            $departments = \App\Models\Department::where('name', $departmentParam)->whereNotNull('email')->get();
+            $departments = Department::where('name', $departmentParam)->whereNotNull('email')->get();
         }
 
         if ($departments->isEmpty()) {
@@ -153,7 +155,7 @@ class DtrController extends Controller
         $emailsQueued = 0;
 
         foreach ($departments as $dept) {
-            $employees = \App\Models\Employee::where('department', $dept->name)
+            $employees = Employee::where('department', $dept->name)
                             ->where('is_hidden', false)
                             ->orderBy('name', 'asc')
                             ->get();
@@ -173,8 +175,8 @@ class DtrController extends Controller
                 'year' => $year
             ])->render();
 
-            // 🌟 2. THE FIX: Send the task to the background queue instead of waiting
-            \App\Jobs\GenerateAndSendDtrPdf::dispatch($html, $dept->email, $dept->name, $month, $year);
+            // 2. Send the task to the background queue instead of waiting
+            GenerateAndSendDtrPdf::dispatch($html, $dept->email, $dept->name, $month, $year);
 
             $emailsQueued++;
         }
@@ -189,10 +191,11 @@ class DtrController extends Controller
     // ==============================================================
     // 2. LIVE FEED & API
     // ==============================================================
-public function queueMonitor()
+
+    public function queueMonitor()
     {
-        $pendingJobs = \Illuminate\Support\Facades\DB::table('jobs')->orderBy('id', 'asc')->get();
-        $failedJobs = \Illuminate\Support\Facades\DB::table('failed_jobs')->orderBy('id', 'desc')->get();
+        $pendingJobs = DB::table('jobs')->orderBy('id', 'asc')->get();
+        $failedJobs = DB::table('failed_jobs')->orderBy('id', 'desc')->get();
 
         return view('dtr.queue', compact('pendingJobs', 'failedJobs'));
     }
@@ -358,30 +361,41 @@ public function queueMonitor()
     // ==============================================================
     // 4. PRIVATE HELPERS (The Core Math Engine)
     // ==============================================================
+
     private function generateDtrData($employeeId, $year, $month, $isPrint = false)
     {
-        $employee = \App\Models\Employee::findOrFail($employeeId);
+        $employee = Employee::findOrFail($employeeId);
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
         $endDate = $startDate->copy()->endOfMonth()->endOfDay();
 
-        $department = \App\Models\Department::where('name', $employee->department)->first();
-        $requiredPunches = $department ? $department->required_punches : 4;
+        $department = Department::where('name', $employee->department)->first();
 
-        $rawLogs = \App\Models\AttendanceLog::where('employee_id', $employee->id)
+        // 🌟 DYNAMIC PUNCH OVERRIDE
+        $jobTitle = strtolower($employee->position ?? '');
+
+        if (str_contains($jobTitle, 'nurse') || str_contains($jobTitle, 'guard')) {
+            $requiredPunches = 2;
+        } elseif (isset($employee->required_punches)) {
+            $requiredPunches = $employee->required_punches;
+        } else {
+            $requiredPunches = $department ? $department->required_punches : 4;
+        }
+
+        $rawLogs = AttendanceLog::where('employee_id', $employee->id)
             ->whereBetween('punch_time', [$startDate->copy()->subDay(), $endDate->copy()->addDay()])
             ->orderBy('punch_time')
             ->get();
 
-        $leaves = \App\Models\Leave::where('employee_id', $employee->id)->where('status', 'approved')
+        $leaves = Leave::where('employee_id', $employee->id)->where('status', 'approved')
             ->where('start_date', '<=', $endDate->format('Y-m-d'))->where('end_date', '>=', $startDate->format('Y-m-d'))->get();
 
-        $travels = \App\Models\TravelOrder::where('employee_id', $employee->id)->where('status', 'approved')
+        $travels = TravelOrder::where('employee_id', $employee->id)->where('status', 'approved')
             ->where('start_date', '<=', $endDate->format('Y-m-d'))->where('end_date', '>=', $startDate->format('Y-m-d'))->get();
 
-        $passSlips = \App\Models\PassSlip::where('employee_id', $employee->id)->whereNotNull('dept_head_approved_at')
+        $passSlips = PassSlip::where('employee_id', $employee->id)->whereNotNull('dept_head_approved_at')
             ->whereBetween('transaction_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
 
-        $holidays = \App\Models\Holiday::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
+        $holidays = Holiday::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
 
         $pairedFlexibleShifts = [];
         if ($requiredPunches == 2) {
