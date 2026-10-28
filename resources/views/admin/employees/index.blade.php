@@ -50,13 +50,23 @@
         </div>
         @endif
 
-        <!-- 🌟 LIVE SEARCH BAR 🌟 -->
-        <div class="flex justify-end">
+        <!-- 🌟 LIVE SEARCH BAR & DEPARTMENT FILTER 🌟 -->
+        <div class="flex flex-col sm:flex-row justify-end gap-3">
+            <!-- Department Dropdown Filter -->
+            <select id="departmentFilter" class="w-full sm:w-64 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all text-slate-700 font-medium cursor-pointer">
+                <option value="All">All Departments</option>
+                <option value="Unassigned">Unassigned</option>
+                @foreach($departments as $dept)
+                    <option value="{{ $dept->name }}">{{ $dept->name }}</option>
+                @endforeach
+            </select>
+
+            <!-- Search Input -->
             <div class="relative w-full sm:w-80">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" id="employeeSearchInput" placeholder="Search name, ID, or department..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all text-slate-700 font-medium">
+                <input type="text" id="employeeSearchInput" placeholder="Search name, ID, or title..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all text-slate-700 font-medium">
             </div>
         </div>
 
@@ -75,8 +85,8 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100" id="employeeTableBody">
                         @forelse($employees as $employee)
-                        <!-- 🌟 Added 'employee-row' class for JS targeting 🌟 -->
-                        <tr class="hover:bg-slate-50 transition-colors employee-row">
+                        <!-- 🌟 Added data-department attribute for accurate JS filtering 🌟 -->
+                        <tr class="hover:bg-slate-50 transition-colors employee-row" data-department="{{ $employee->department ?? 'Unassigned' }}">
                             <td class="px-6 py-4">
                                 <div class="font-black text-slate-800">{{ $employee->name }}</div>
                             </td>
@@ -275,29 +285,43 @@
         </div>
     </div>
 
-    <!-- Script to handle Modals, Validation, & Live Search -->
+    <!-- Script to handle Modals, Validation, & Live Search/Filter -->
     <script>
-        // 🌟 LIVE SEARCH JAVASCRIPT 🌟
+        // 🌟 LIVE SEARCH & DEPARTMENT FILTER JAVASCRIPT 🌟
         document.addEventListener("DOMContentLoaded", function() {
             const searchInput = document.getElementById('employeeSearchInput');
+            const deptFilter = document.getElementById('departmentFilter');
             const rows = document.querySelectorAll('.employee-row');
 
-            if(searchInput) {
-                searchInput.addEventListener('keyup', function() {
-                    const searchTerm = this.value.toLowerCase();
+            function filterEmployees() {
+                const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+                const selectedDept = deptFilter ? deptFilter.value : 'All';
 
-                    rows.forEach(row => {
-                        // Get all text content inside this specific row
-                        const rowText = row.innerText.toLowerCase();
+                rows.forEach(row => {
+                    const rowText = row.innerText.toLowerCase();
+                    const rowDept = row.getAttribute('data-department');
 
-                        // Show or hide the row based on the search
-                        if (rowText.includes(searchTerm)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
+                    // Check if row matches search text
+                    const matchesSearch = rowText.includes(searchTerm);
+
+                    // Check if row matches selected department
+                    const matchesDept = (selectedDept === 'All') || (rowDept === selectedDept);
+
+                    // Show row only if BOTH conditions are met
+                    if (matchesSearch && matchesDept) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
                 });
+            }
+
+            // Attach event listeners to both inputs
+            if(searchInput) {
+                searchInput.addEventListener('keyup', filterEmployees);
+            }
+            if(deptFilter) {
+                deptFilter.addEventListener('change', filterEmployees);
             }
         });
 
