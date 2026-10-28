@@ -174,11 +174,9 @@ class DtrController extends Controller
                 'year' => $year
             ])->render();
 
-            $pdfContent = \Spatie\Browsershot\Browsershot::html($html)
-                        ->format('Legal')
-                        ->margins(10, 10, 10, 10)
-                        ->showBackground()
-                        ->pdf();
+            // 🌟 HOSTINGER FIX: Generate PDF natively via PHP
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('legal', 'portrait');
+            $pdfContent = $pdf->output();
 
             \Illuminate\Support\Facades\Mail::to($dept->email)
                 ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
