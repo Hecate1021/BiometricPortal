@@ -111,6 +111,14 @@
                             Live Punch
                         </a>
 
+                        <a href="{{ route('queue.monitor') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('queue.monitor') ? 'bg-slate-900 text-white font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-semibold' }} rounded-xl transition-colors">
+    <!-- Database / Server Icon -->
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+    </svg>
+    Queue Monitor
+</a>
+
                         <a href="{{ route('dtr.upload_form') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('dtr.upload_form') ? 'bg-slate-900 text-white font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-semibold' }} rounded-xl transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             Sync Data Device
