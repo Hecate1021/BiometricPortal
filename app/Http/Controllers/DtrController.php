@@ -181,11 +181,10 @@ class DtrController extends Controller
                 'Content-Type'  => 'application/json'
             ])->post('https://api.doczilla.app/v1/pdf', [
                 'page' => [
-                    // Doczilla API requires the HTML string to be Base64 encoded
                     'html' => base64_encode($html) 
                 ],
                 'pdf' => [
-                    'format' => 'Legal',
+                    'format' => 'legal', // 🌟 FIXED: Changed 'Legal' to 'legal'
                     'printBackground' => true,
                     'margin' => [
                         'top' => '10mm',
@@ -197,17 +196,14 @@ class DtrController extends Controller
             ]);
 
             if ($response->failed()) {
-                // This will halt the server and print the exact Doczilla error to your screen
-                dd([
-                    'HTTP_STATUS' => $response->status(),
-                    'DOCZILLA_ERROR' => $response->json() ?? $response->body()
-                ]);
+                \Illuminate\Support\Facades\Log::error("Doczilla PDF API failed for " . $dept->name . ": " . $response->body());
+                continue; // Skip this department so the loop doesn't crash for others
             }
 
-            // 🌟 3. Extract the raw binary PDF file returned directly by the API
+            // 3. Extract the raw binary PDF file returned directly by the API
             $pdfContent = $response->body();
 
-            // 🌟 4. Send Email
+            // 4. Send Email
             \Illuminate\Support\Facades\Mail::to($dept->email)
                 ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
 
