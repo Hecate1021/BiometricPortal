@@ -134,9 +134,9 @@ class DtrController extends Controller
         return view('dtr.print_bulk', compact('allDtrs', 'department', 'month', 'year'));
     }
 
-    public function sendBulkEmails(Request $request)
+   public function sendBulkEmails(Request $request)
     {
-        set_time_limit(300);
+        set_time_limit(300); // Prevent timeouts for heavy API requests
 
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
@@ -167,6 +167,7 @@ class DtrController extends Controller
                 $allDtrs[] = $this->generateDtrData($employee->id, $year, $month, true);
             }
 
+            // 1. Render the beautiful Tailwind Blade view into a string of HTML
             $html = view('dtr.print_bulk', [
                 'allDtrs' => $allDtrs,
                 'department' => $dept->name,
@@ -174,10 +175,36 @@ class DtrController extends Controller
                 'year' => $year
             ])->render();
 
-            // 🌟 HOSTINGER FIX: Generate PDF natively via PHP
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('legal', 'portrait');
-            $pdfContent = $pdf->output();
+            // 🌟 2. HOSTINGER FIX: Send HTML to Doczilla API 
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('API2PDF_KEY'),
+                'Content-Type'  => 'application/json'
+            ])->post('https://api.doczilla.app/v1/pdf', [
+                'page' => [
+                    // Doczilla API requires the HTML string to be Base64 encoded
+                    'html' => base64_encode($html) 
+                ],
+                'pdf' => [
+                    'format' => 'Legal',
+                    'printBackground' => true,
+                    'margin' => [
+                        'top' => '10mm',
+                        'right' => '10mm',
+                        'bottom' => '10mm',
+                        'left' => '10mm'
+                    ]
+                ]
+            ]);
 
+            if ($response->failed()) {
+                \Illuminate\Support\Facades\Log::error("Doczilla PDF API failed for " . $dept->name . ": " . $response->body());
+                continue; // Skip this department so the loop doesn't crash for others
+            }
+
+            // 🌟 3. Extract the raw binary PDF file returned directly by the API
+            $pdfContent = $response->body();
+
+            // 🌟 4. Send Email
             \Illuminate\Support\Facades\Mail::to($dept->email)
                 ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
 
@@ -187,7 +214,7 @@ class DtrController extends Controller
         if ($emailsSent > 0) {
             return back()->with('success', "Successfully sent $emailsSent department email(s)!");
         } else {
-            return back()->withErrors(['Could not find employees for the selected departments.']);
+            return back()->withErrors(['Could not find employees or PDF API generation failed. Please check your Laravel error log.']);
         }
     }
 
