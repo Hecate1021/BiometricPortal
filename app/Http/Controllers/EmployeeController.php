@@ -29,6 +29,7 @@ class EmployeeController extends Controller
             'name'         => 'required|string|max:255',
             'company_id'   => 'nullable|string|max:255',
             'biometric_id' => 'nullable|string|max:255',
+            'secondary_biometric_id' => 'nullable|string|max:255',
             'department'   => 'nullable|string|max:255',
             'position'     => 'nullable|string|max:255', 
         ]);
@@ -49,6 +50,7 @@ class EmployeeController extends Controller
             'name'         => 'required|string|max:255',
             'company_id'   => 'nullable|string|max:255',
             'biometric_id' => 'nullable|string|max:255',
+            'secondary_biometric_id' => 'nullable|string|max:255',
             'department'   => 'nullable|string|max:255',
             'position'     => 'nullable|string|max:255', 
         ]);
