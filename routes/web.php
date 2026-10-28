@@ -165,7 +165,7 @@ Route::middleware(['auth'])->group(function () {
             })->name('hide')->whereNumber('id');
         });
 
-
+Route::get('/queue-monitor', [\App\Http\Controllers\DtrController::class, 'queueMonitor'])->name('queue.monitor');
 
         Route::post('/analyze-sync', [DtrController::class, 'analyzeSync'])->name('dtr.analyze_sync');
 

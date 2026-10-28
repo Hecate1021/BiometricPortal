@@ -136,8 +136,6 @@ class DtrController extends Controller
 
    public function sendBulkEmails(Request $request)
     {
-        set_time_limit(300); // Prevent timeouts for heavy API requests
-
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
         $departmentParam = $request->input('department');
@@ -152,7 +150,7 @@ class DtrController extends Controller
             return back()->withErrors(['No departments found with a configured email address.']);
         }
 
-        $emailsSent = 0;
+        $emailsQueued = 0;
 
         foreach ($departments as $dept) {
             $employees = \App\Models\Employee::where('department', $dept->name)
@@ -167,7 +165,7 @@ class DtrController extends Controller
                 $allDtrs[] = $this->generateDtrData($employee->id, $year, $month, true);
             }
 
-            // 1. Render the beautiful Tailwind Blade view into a string of HTML
+            // 1. Render the HTML string instantly
             $html = view('dtr.print_bulk', [
                 'allDtrs' => $allDtrs,
                 'department' => $dept->name,
@@ -175,51 +173,29 @@ class DtrController extends Controller
                 'year' => $year
             ])->render();
 
-            // 🌟 2. HOSTINGER FIX: Send HTML to Doczilla API 
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('API2PDF_KEY'),
-                'Content-Type'  => 'application/json'
-            ])->post('https://api.doczilla.app/v1/pdf', [
-                'page' => [
-                    'html' => base64_encode($html) 
-                ],
-                'pdf' => [
-                    'format' => 'legal', // 🌟 FIXED: Changed 'Legal' to 'legal'
-                    'printBackground' => true,
-                    'margin' => [
-                        'top' => '10mm',
-                        'right' => '10mm',
-                        'bottom' => '10mm',
-                        'left' => '10mm'
-                    ]
-                ]
-            ]);
+            // 🌟 2. THE FIX: Send the task to the background queue instead of waiting
+            \App\Jobs\GenerateAndSendDtrPdf::dispatch($html, $dept->email, $dept->name, $month, $year);
 
-            if ($response->failed()) {
-                \Illuminate\Support\Facades\Log::error("Doczilla PDF API failed for " . $dept->name . ": " . $response->body());
-                continue; // Skip this department so the loop doesn't crash for others
-            }
-
-            // 3. Extract the raw binary PDF file returned directly by the API
-            $pdfContent = $response->body();
-
-            // 4. Send Email
-            \Illuminate\Support\Facades\Mail::to($dept->email)
-                ->send(new \App\Mail\DepartmentDtrReport($pdfContent, $dept->name, $month, $year));
-
-            $emailsSent++;
+            $emailsQueued++;
         }
 
-        if ($emailsSent > 0) {
-            return back()->with('success', "Successfully sent $emailsSent department email(s)!");
+        if ($emailsQueued > 0) {
+            return back()->with('success', "Successfully queued $emailsQueued department email(s) for background processing!");
         } else {
-            return back()->withErrors(['Could not find employees or PDF API generation failed. Please check your Laravel error log.']);
+            return back()->withErrors(['Could not find employees for the selected departments.']);
         }
     }
 
     // ==============================================================
     // 2. LIVE FEED & API
     // ==============================================================
+public function queueMonitor()
+    {
+        $pendingJobs = \Illuminate\Support\Facades\DB::table('jobs')->orderBy('id', 'asc')->get();
+        $failedJobs = \Illuminate\Support\Facades\DB::table('failed_jobs')->orderBy('id', 'desc')->get();
+
+        return view('dtr.queue', compact('pendingJobs', 'failedJobs'));
+    }
 
     public function liveFeed()
     {
