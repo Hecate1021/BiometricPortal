@@ -373,16 +373,16 @@ class DtrController extends Controller
 
     private function generateDtrData($employeeId, $year, $month, $isPrint = false)
     {
-        $employee = Employee::findOrFail($employeeId);
+        $employee = \App\Models\Employee::findOrFail($employeeId);
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
         $endDate = $startDate->copy()->endOfMonth()->endOfDay();
 
-        $department = Department::where('name', $employee->department)->first();
+        $department = \App\Models\Department::where('name', $employee->department)->first();
 
         // 🌟 DYNAMIC PUNCH OVERRIDE
         $jobTitle = strtolower($employee->position ?? '');
 
-        if (str_contains($jobTitle, 'nurse') || str_contains($jobTitle, 'guard')) {
+        if (str_contains($jobTitle, 'nurse') || str_contains($jobTitle, 'guard') || str_contains($jobTitle, 'security')) {
             $requiredPunches = 2;
         } elseif (isset($employee->required_punches)) {
             $requiredPunches = $employee->required_punches;
@@ -390,21 +390,21 @@ class DtrController extends Controller
             $requiredPunches = $department ? $department->required_punches : 4;
         }
 
-        $rawLogs = AttendanceLog::where('employee_id', $employee->id)
+        $rawLogs = \App\Models\AttendanceLog::where('employee_id', $employee->id)
             ->whereBetween('punch_time', [$startDate->copy()->subDay(), $endDate->copy()->addDay()])
             ->orderBy('punch_time')
             ->get();
 
-        $leaves = Leave::where('employee_id', $employee->id)->where('status', 'approved')
+        $leaves = \App\Models\Leave::where('employee_id', $employee->id)->where('status', 'approved')
             ->where('start_date', '<=', $endDate->format('Y-m-d'))->where('end_date', '>=', $startDate->format('Y-m-d'))->get();
 
-        $travels = TravelOrder::where('employee_id', $employee->id)->where('status', 'approved')
+        $travels = \App\Models\TravelOrder::where('employee_id', $employee->id)->where('status', 'approved')
             ->where('start_date', '<=', $endDate->format('Y-m-d'))->where('end_date', '>=', $startDate->format('Y-m-d'))->get();
 
-        $passSlips = PassSlip::where('employee_id', $employee->id)->whereNotNull('dept_head_approved_at')
+        $passSlips = \App\Models\PassSlip::where('employee_id', $employee->id)->whereNotNull('dept_head_approved_at')
             ->whereBetween('transaction_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
 
-        $holidays = Holiday::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
+        $holidays = \App\Models\Holiday::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
 
         $pairedFlexibleShifts = [];
         if ($requiredPunches == 2) {
@@ -560,11 +560,15 @@ class DtrController extends Controller
                 }
             }
 
+            // 🌟 1. REMARK WEEKEND EXEMPTION
             if ($remark) {
                 if (!$holiday || in_array($holiday->type, ['regular', 'special'])) {
-                    $totalMinutes = 480;
-                    $lateMinutes = 0;
-                    $earlyMinutes = 0;
+                    // Give 8-hour credit if it's a weekday, OR if they are a Nurse/Guard
+                    if (!$date->isWeekend() || $requiredPunches == 2) {
+                        $totalMinutes = 480;
+                        $lateMinutes = 0;
+                        $earlyMinutes = 0;
+                    }
                 }
             }
 
@@ -578,6 +582,7 @@ class DtrController extends Controller
             $totEarlyMins += $earlyMinutes;
             $totWorkMins += $totalMinutes;
 
+            // 🌟 2. DAY COUNTER EXEMPTION
             if (!$date->isWeekend() && (!$holiday || $holiday->type !== 'regular')) {
                 $reqWorkDays++;
                 if ($totalMinutes > 0 || $remark) {
@@ -587,7 +592,16 @@ class DtrController extends Controller
                     $absentDaysCount++;
                 }
             } else {
-                if ($totalMinutes > 0 || $remark) $renDaysCount++;
+                // If it is a weekend OR a regular holiday:
+                if ($totalMinutes > 0) {
+                    $renDaysCount++;
+                } elseif ($remark) {
+                    // Count the remark if they are a Nurse/Guard, or if it's a weekday Regular Holiday
+                    if ($requiredPunches == 2 || !$date->isWeekend()) {
+                        $renDaysCount++;
+                        $leaveObCount++;
+                    }
+                }
             }
 
             $amInStr = $amIn ? $amIn->format($isPrint ? 'H:i' : 'h:i A') : '';
