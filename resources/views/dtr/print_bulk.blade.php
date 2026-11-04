@@ -7,24 +7,97 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            /* 🌟 Removed hardcoded paper size so the printer dialog decides (A4, Letter, Legal) 🌟 */
             @page { margin: 0.3in; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white !important; }
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: white !important; }
             .print-hidden { display: none !important; }
-
-            /* THIS IS THE MAGIC LINE FOR BULK PRINTING */
             .page-break { break-after: page; }
-            /* Ensures the very last page doesn't spit out a blank sheet */
             .page-break:last-child { break-after: auto; }
-
-            /* Force the container to take up the full printable area of the chosen paper */
             .print-container { width: 100% !important; max-width: none !important; box-shadow: none !important; margin: 0 !important; }
         }
         .td-border { border: 1px solid black; padding: 2px 4px; }
         .th-border { border: 1px solid black; padding: 2px 4px; font-weight: bold; text-align: center; }
+
+        /* 🌟 UPDATED COVER PAGE CSS (BIGGER WATERMARK & TEXT) 🌟 */
+        .cover-page {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: white;
+            break-after: page;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+     .cover-page::before {
+            content: "";
+            position: absolute;
+            /* 🌟 FIXED: Use safe margins instead of transform math to guarantee no cuts */
+            top: 5%;
+            bottom: 5%;
+            left: 5%;
+            right: 5%;
+            background-image: url('{{ asset("images/Logo.png") }}');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .cover-title-top {
+            /* 🌟 FIXED: Reduced font size slightly so it stays on one line */
+            font-size: 38px;
+            font-weight: 900;
+            margin-bottom: 50px;
+            letter-spacing: 2px;
+            color: #000;
+            text-transform: uppercase;
+            width: 100%;
+            padding: 0 20px;
+        }
+        .cover-title-main {
+            font-size: 90px;
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: 4px;
+            color: #000;
+            text-transform: uppercase;
+        }
+        .cover-department {
+            font-size: 48px;
+            font-weight: 900;
+            margin-top: 50px;
+            line-height: 1.3;
+            max-width: 90%;
+            color: #000;
+            text-transform: uppercase;
+        }
+        .cover-date {
+            font-size: 32px;
+            margin-top: 50px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #000;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="bg-gray-200">
+
+    @php
+        // Calculate total DTRs for the print button
+        $totalDtrs = 0;
+        if(isset($groupedDtrs)) {
+            foreach($groupedDtrs as $dtrs) {
+                $totalDtrs += count($dtrs);
+            }
+        }
+    @endphp
 
     <!-- Print Buttons (Hides when actually printing) -->
     <div class="max-w-4xl mx-auto mt-4 mb-4 flex justify-end gap-3 print-hidden px-4">
@@ -35,12 +108,31 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            Print {{ count($allDtrs) }} DTRs
+            Print {{ $totalDtrs }} DTRs
         </button>
     </div>
 
-    <!-- Loop through every employee's DTR dataset -->
-    @foreach($allDtrs as $data)
+    <!-- 🌟 OUTER LOOP: Loop through each Department 🌟 -->
+    @foreach($groupedDtrs as $deptName => $dtrs)
+
+    <!-- COVER PAGE FOR THE DEPARTMENT -->
+    <div class="cover-page print-container max-w-4xl mx-auto shadow-lg mb-8">
+        <div class="cover-title-top">MUNICIPALITY OF LAKE SEBU</div>
+
+        <div class="cover-title-main">BIOMETRIC</div>
+        <div class="cover-title-main">ATTENDANCE</div>
+
+        <div class="cover-department">
+            {{ $deptName }}
+        </div>
+
+        <div class="cover-date">
+            {{ \Carbon\Carbon::create()->month($month)->format('F') }} {{ $year }}
+        </div>
+    </div>
+
+    <!-- 🌟 INNER LOOP: Loop through every employee in this Department 🌟 -->
+    @foreach($dtrs as $data)
 
     <!-- 🌟 Replaced fixed inches with flexible w-full and max-w-4xl 🌟 -->
     <div class="page-break print-container w-full max-w-4xl mx-auto bg-white p-4 sm:p-6 text-[10px] text-black shadow-lg mb-8 flex flex-col justify-between">
@@ -180,7 +272,6 @@
         </div>
 
         <!-- Footer Summary Area -->
-        <!-- 🌟 Removed h-40, replaced with h-auto to allow stretching based on paper size 🌟 -->
         <div class="flex border-b border-l border-r border-black h-auto min-h-[10rem] shrink-0 mt-auto">
             <!-- Left Summary -->
             <div class="w-[60%] border-r border-black p-2 flex">
@@ -254,7 +345,8 @@
 
     </div>
 
-    @endforeach
+    @endforeach <!-- End Inner Employee Loop -->
+    @endforeach <!-- End Outer Department Loop -->
 
 </body>
 </html>

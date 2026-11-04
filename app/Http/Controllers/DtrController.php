@@ -110,7 +110,7 @@ class DtrController extends Controller
         return view('dtr.print', $data);
     }
 
-    public function printBulk(Request $request)
+   public function printBulk(Request $request)
     {
         $year = (int) $request->input('year', now()->year);
         $month = (int) $request->input('month', now()->month);
@@ -122,18 +122,27 @@ class DtrController extends Controller
             $query->where('department', $department);
         }
 
-        $employees = $query->orderBy('name')->get();
+        // Order by department first, then name
+        $employees = $query->orderBy('department')->orderBy('name')->get();
 
         if ($employees->isEmpty()) {
             return redirect()->back()->with('error', 'No employees found for this department.');
         }
 
-        $allDtrs = [];
+        // 🌟 GROUP DTRS BY DEPARTMENT FOR THE COVER PAGE
+        $groupedDtrs = [];
         foreach ($employees as $emp) {
-            $allDtrs[] = $this->generateDtrData($emp->id, $year, $month, true);
+            $deptName = $emp->department ?? 'UNASSIGNED';
+
+            if (!isset($groupedDtrs[$deptName])) {
+                $groupedDtrs[$deptName] = [];
+            }
+
+            $groupedDtrs[$deptName][] = $this->generateDtrData($emp->id, $year, $month, true);
         }
 
-        return view('dtr.print_bulk', compact('allDtrs', 'department', 'month', 'year'));
+        // Pass groupedDtrs instead of allDtrs
+        return view('dtr.print_bulk', compact('groupedDtrs', 'department', 'month', 'year'));
     }
 
     public function sendBulkEmails(Request $request)
