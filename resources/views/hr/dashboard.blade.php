@@ -2,11 +2,11 @@
     <!-- CSS & JS Integrations (Select2 & Flatpickr) -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    
+
     <style>
         .select2-container .select2-selection--single {
             height: 42px !important; border-color: #cbd5e1 !important; border-radius: 0.5rem !important;
@@ -28,7 +28,7 @@
     </style>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8">
-        
+
         <!-- Page Header -->
         <div class="border-b border-slate-200 pb-4">
             <h1 class="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">HR Staff Portal 🗄️</h1>
@@ -44,7 +44,7 @@
 
         <div class="space-y-8">
 
-           
+
 
             <!-- 🌟 HR PROXY FILING SECTION 🌟 -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-8">
@@ -97,151 +97,224 @@
                     <button onclick="switchTab('pass')" id="tab-pass" class="tab-btn px-5 sm:px-8 py-3 text-sm sm:text-base font-bold text-slate-500 hover:text-slate-700 transition-colors border border-transparent border-b-0 rounded-t-2xl relative z-0 translate-y-[1px] flex items-center gap-2 whitespace-nowrap">Pass Slips Tracking</button>
                     <button onclick="switchTab('leave')" id="tab-leave" class="tab-btn px-5 sm:px-8 py-3 text-sm sm:text-base font-bold text-slate-500 hover:text-slate-700 transition-colors border border-transparent border-b-0 rounded-t-2xl relative z-0 translate-y-[1px] flex items-center gap-2 whitespace-nowrap">Leave Requests Tracking</button>
                 </div>
-                
+
                 <div class="relative w-full md:w-72 shrink-0 mb-2">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <input type="text" id="requestSearchInput" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 shadow-sm transition-colors" placeholder="Search forms (name, ID)...">
+                    <!-- 🌟 WRAP YOUR SEARCH INPUT IN A FORM 🌟 -->
+<!-- 🌟 UPDATED SEARCH FORM WITH CLEAR BUTTON 🌟 -->
+<form id="searchForm" method="GET" action="{{ route('hr.dashboard') }}" class="relative w-full sm:w-80">
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </div>
+
+    <!-- Notice the padding right is now pr-10 to make room for the X button -->
+    <input type="text" id="liveSearchInput" name="search" value="{{ request('search') }}" placeholder="Search employee name..." class="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all text-slate-700 font-medium">
+
+    <!-- 🌟 NEW CLEAR (X) BUTTON 🌟 -->
+    @if(request()->filled('search'))
+        <a href="{{ route('hr.dashboard') }}" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500 transition-colors cursor-pointer" title="Clear Search">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </a>
+    @endif
+
+    <button type="submit" class="hidden"></button>
+</form>
+
+<!-- 🌟 UPDATED SCRIPT 🌟 -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('liveSearchInput');
+        const searchForm = document.getElementById('searchForm');
+        let typingTimer;
+
+        // Increased to 800ms to give you more time to type or backspace
+        const doneTypingInterval = 800;
+
+        if (searchInput && searchForm) {
+            // Move cursor to the end of the text
+            searchInput.focus();
+            let val = searchInput.value;
+            searchInput.value = '';
+            searchInput.value = val;
+
+            // Listen for keystrokes
+            searchInput.addEventListener('input', function () {
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(function () {
+                    // If the field is completely empty after backspacing, cleanly redirect
+                    if (searchInput.value.trim() === '') {
+                        window.location.href = "{{ route('hr.dashboard') }}";
+                    } else {
+                        searchForm.submit();
+                    }
+                }, doneTypingInterval);
+            });
+        }
+    });
+</script>
                 </div>
             </div>
 
             <!-- Main Tracking Content Box -->
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm relative z-0 overflow-hidden mb-10 min-h-[400px]">
-                
-                <!-- 1. CONTENT: TRAVEL ORDERS TRACKING -->
-                <div id="content-travel" class="tab-content block p-5 space-y-4 bg-slate-50">
-                    @forelse($allTravels ?? [] as $travel)
-                        <!-- 🌟 COLOR-CODED LEFT BORDER (EMERALD) 🌟 -->
-                        <div class="tracking-card p-4 md:p-5 bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-xl flex flex-col gap-4 hover:shadow-md transition-shadow">
-                            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                <div class="flex-1">
-                                    <p class="font-black text-slate-800 text-lg flex items-center gap-2">
-                                        {{ $travel->employee->name ?? 'Unknown Employee' }}
-                                        <!-- 🌟 TRACKING NUMBER BADGE 🌟 -->
-                                        <span class="bg-emerald-100 text-emerald-700 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-emerald-200">
-                                            {{ $travel->form_number ?? 'TO-'.str_pad($travel->id, 4, '0', STR_PAD_LEFT) }}
-                                        </span>
-                                    </p>
-                                    <p class="text-xs font-bold text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($travel->start_date)->format('M d, Y') }}</p>
-                                    <p class="text-xs font-medium text-slate-600 mt-1 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> {{ $travel->destination ?? 'Official Travel' }}</p>
-                                </div>
-                                <div class="shrink-0">
-                                    @if(strtolower($travel->status) === 'approved' || !empty($travel->mayor_approved_at)) <span class="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">Fully Approved</span>
-                                    @elseif(strtolower($travel->status) === 'declined' || strtolower($travel->status) === 'rejected') <span class="bg-rose-100 text-rose-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-rose-200 shadow-sm">Declined</span>
-                                    @else <span class="bg-amber-100 text-amber-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">{{ str_replace('_', ' ', $travel->status ?? 'In Progress') }}</span> @endif
-                                </div>
-                            </div>
-                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5 pt-4 border-t border-slate-100 mt-1">
-                                <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-                                    <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($travel->dept_head_approved_at) ? 'text-emerald-600' : 'text-amber-500' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Dept Head</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($travel->dept_head_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
-                                    <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($travel->hrmo_approved_at) ? 'text-emerald-600' : (!empty($travel->dept_head_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> HRMO</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($travel->hrmo_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
-                                    <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($travel->mayor_approved_at) ? 'text-emerald-600' : (!empty($travel->hrmo_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mayor</div>
-                                </div>
-                                <div class="shrink-0 flex justify-end gap-2">
-                                    <a href="{{ route('employee.travel.edit', $travel->id) }}" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
-                                    </a>
-                                    @php $isApproved = strtolower($travel->status) === 'approved' || !empty($travel->mayor_approved_at); @endphp
-                                    <a href="{{ route('travel_orders.print', $travel->id) }}" target="_blank" class="px-5 py-2.5 bg-emerald-600 border border-emerald-600 text-white hover:bg-emerald-700 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> {{ $isApproved ? 'Print' : 'Review' }}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-sm text-slate-400 italic text-center py-16">No travel orders to track right now.</p>
-                    @endforelse
-                </div>
 
-                <!-- 2. CONTENT: PASS SLIPS TRACKING -->
-                <div id="content-pass" class="tab-content hidden p-5 space-y-4 bg-slate-50">
-                    @forelse($allPassSlips ?? [] as $pass)
-                        <!-- 🌟 COLOR-CODED LEFT BORDER (PURPLE) 🌟 -->
-                        <div class="tracking-card p-4 md:p-5 bg-white border border-slate-200 border-l-4 border-l-purple-500 rounded-xl flex flex-col gap-4 hover:shadow-md transition-shadow">
-                            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                <div class="flex-1">
-                                    <p class="font-black text-slate-800 text-lg flex items-center gap-2">
-                                        {{ $pass->employee->name ?? 'Unknown Employee' }}
-                                        <!-- 🌟 TRACKING NUMBER BADGE 🌟 -->
-                                        <span class="bg-purple-100 text-purple-700 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-purple-200">
-                                            PS-{{ str_pad($pass->id, 4, '0', STR_PAD_LEFT) }}
-                                        </span>
-                                    </p>
-                                    <p class="text-xs font-bold text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($pass->transaction_date)->format('M d, Y') }}</p>
-                                    <p class="text-xs font-medium text-slate-600 mt-1 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> {{ Str::limit($pass->transaction_details, 50) }}</p>
-                                </div>
-                                <div class="shrink-0">
-                                    @if(!empty($pass->dept_head_approved_at) || in_array(strtolower($pass->status), ['approved', 'approved_dept_head', 'pending_hrmo', 'pending_mayor', 'approved_hrmo'])) <span class="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">Fully Approved</span>
-                                    @elseif(strtolower($pass->status) === 'declined' || strtolower($pass->status) === 'rejected') <span class="bg-rose-100 text-rose-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-rose-200 shadow-sm">Declined</span>
-                                    @else <span class="bg-amber-100 text-amber-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">Pending (Dept Head)</span> @endif
-                                </div>
-                            </div>
-                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5 pt-4 border-t border-slate-100 mt-1">
-                                <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-                                    <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($pass->dept_head_approved_at) || in_array(strtolower($pass->status), ['approved', 'pending_hrmo']) ? 'text-emerald-600' : 'text-amber-500' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Dept Head Review</div>
-                                </div>
-                                <div class="shrink-0 flex justify-end gap-2">
-                                    <a href="{{ route('employee.pass_slip.edit', $pass->id) }}" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
-                                    </a>
-                                    @php $isApproved = !empty($pass->dept_head_approved_at) || in_array(strtolower($pass->status), ['approved', 'pending_hrmo']); @endphp
-                                    <a href="{{ route('pass_slips.print', $pass->id) }}" target="_blank" class="px-5 py-2.5 bg-purple-600 border border-purple-600 text-white hover:bg-purple-700 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> {{ $isApproved ? 'Print' : 'Review' }}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-sm text-slate-400 italic text-center py-16">No pass slips to track right now.</p>
-                    @endforelse
+    <!-- 1. CONTENT: TRAVEL ORDERS TRACKING -->
+    <div id="content-travel" class="tab-content block p-5 space-y-4 bg-slate-50">
+        @forelse($allTravels ?? [] as $travel)
+            <!-- 🌟 COLOR-CODED LEFT BORDER (EMERALD) 🌟 -->
+            <div class="tracking-card p-4 md:p-5 bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-xl flex flex-col gap-4 hover:shadow-md transition-shadow">
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="font-black text-slate-800 text-lg flex items-center gap-2">
+                            {{ $travel->employee->name ?? 'Unknown Employee' }}
+                            <!-- 🌟 TRACKING NUMBER BADGE 🌟 -->
+                            <span class="bg-emerald-100 text-emerald-700 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-emerald-200">
+                                {{ $travel->form_number ?? 'TO-'.str_pad($travel->id, 4, '0', STR_PAD_LEFT) }}
+                            </span>
+                        </p>
+                        <p class="text-xs font-bold text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($travel->start_date)->format('M d, Y') }}</p>
+                        <p class="text-xs font-medium text-slate-600 mt-1 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> {{ $travel->destination ?? 'Official Travel' }}</p>
+                    </div>
+                    <div class="shrink-0">
+                        @if(strtolower($travel->status) === 'approved' || !empty($travel->mayor_approved_at)) <span class="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">Fully Approved</span>
+                        @elseif(strtolower($travel->status) === 'declined' || strtolower($travel->status) === 'rejected') <span class="bg-rose-100 text-rose-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-rose-200 shadow-sm">Declined</span>
+                        @else <span class="bg-amber-100 text-amber-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">{{ str_replace('_', ' ', $travel->status ?? 'In Progress') }}</span> @endif
+                    </div>
                 </div>
-
-                <!-- 3. CONTENT: LEAVES TRACKING -->
-                <div id="content-leave" class="tab-content hidden p-5 space-y-4 bg-slate-50">
-                    @forelse($allLeaves ?? [] as $leave)
-                        <!-- 🌟 COLOR-CODED LEFT BORDER (BLUE) 🌟 -->
-                        <div class="tracking-card p-4 md:p-5 bg-white border border-slate-200 border-l-4 border-l-blue-500 rounded-xl flex flex-col gap-4 hover:shadow-md transition-shadow">
-                            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                <div class="flex-1">
-                                    <p class="font-black text-slate-800 text-lg flex items-center gap-2">
-                                        {{ $leave->employee->name ?? 'Unknown Employee' }}
-                                        <!-- 🌟 TRACKING NUMBER BADGE 🌟 -->
-                                        <span class="bg-blue-100 text-blue-700 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-blue-200">
-                                            LV-{{ str_pad($leave->id, 4, '0', STR_PAD_LEFT) }}
-                                        </span>
-                                    </p>
-                                    <p class="text-xs font-bold text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($leave->start_date)->format('M d, Y') }} @if($leave->end_date && $leave->start_date !== $leave->end_date) - {{ \Carbon\Carbon::parse($leave->end_date)->format('M d, Y') }} @endif</p>
-                                    <span class="inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-slate-100 text-slate-600">{{ $leave->type ?? 'Unspecified Leave' }}</span>
-                                </div>
-                                <div class="shrink-0">
-                                    @if(strtolower($leave->status) === 'approved' || !empty($leave->mayor_approved_at)) <span class="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">Fully Approved</span>
-                                    @elseif(strtolower($leave->status) === 'declined' || strtolower($leave->status) === 'rejected') <span class="bg-rose-100 text-rose-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-rose-200 shadow-sm">Declined</span>
-                                    @else <span class="bg-amber-100 text-amber-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">{{ str_replace('_', ' ', $leave->status ?? 'In Progress') }}</span> @endif
-                                </div>
-                            </div>
-                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5 pt-4 border-t border-slate-100 mt-1">
-                                <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-                                    <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($leave->dept_head_approved_at) ? 'text-emerald-600' : 'text-amber-500' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Dept Head</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($leave->dept_head_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
-                                    <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($leave->hrmo_approved_at) ? 'text-emerald-600' : (!empty($leave->dept_head_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> HRMO</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($leave->hrmo_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
-                                    <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($leave->mayor_approved_at) ? 'text-emerald-600' : (!empty($leave->hrmo_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mayor</div>
-                                </div>
-                                <div class="shrink-0 flex justify-end gap-2">
-                                    <a href="{{ route('employee.leave.edit', $leave->id) }}" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
-                                    </a>
-                                    @php $isApproved = strtolower($leave->status) === 'approved' || !empty($leave->mayor_approved_at); @endphp
-                                    <a href="{{ route('leaves.print', $leave->id) }}" target="_blank" class="px-5 py-2.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> {{ $isApproved ? 'Print' : 'Review' }}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-sm text-slate-400 italic text-center py-16">No leaves to track right now.</p>
-                    @endforelse
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5 pt-4 border-t border-slate-100 mt-1">
+                    <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+                        <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($travel->dept_head_approved_at) ? 'text-emerald-600' : 'text-amber-500' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Dept Head</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($travel->dept_head_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
+                        <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($travel->hrmo_approved_at) ? 'text-emerald-600' : (!empty($travel->dept_head_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> HRMO</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($travel->hrmo_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
+                        <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($travel->mayor_approved_at) ? 'text-emerald-600' : (!empty($travel->hrmo_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mayor</div>
+                    </div>
+                    <div class="shrink-0 flex justify-end gap-2">
+                        <a href="{{ route('employee.travel.edit', $travel->id) }}" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
+                        </a>
+                        @php $isApproved = strtolower($travel->status) === 'approved' || !empty($travel->mayor_approved_at); @endphp
+                        <a href="{{ route('travel_orders.print', $travel->id) }}" target="_blank" class="px-5 py-2.5 bg-emerald-600 border border-emerald-600 text-white hover:bg-emerald-700 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> {{ $isApproved ? 'Print' : 'Review' }}
+                        </a>
+                    </div>
                 </div>
             </div>
+        @empty
+            <p class="text-sm text-slate-400 italic text-center py-16">No travel orders to track right now.</p>
+        @endforelse
+
+        <!-- 🌟 PAGINATION LINKS FOR TRAVELS 🌟 -->
+        @if(isset($allTravels) && $allTravels->hasPages())
+            <div class="mt-4 pt-4 border-t border-slate-200">
+                {{ $allTravels->appends(request()->except('travel_page'))->links() }}
+            </div>
+        @endif
+    </div>
+
+    <!-- 2. CONTENT: PASS SLIPS TRACKING -->
+    <div id="content-pass" class="tab-content hidden p-5 space-y-4 bg-slate-50">
+        @forelse($allPassSlips ?? [] as $pass)
+            <!-- 🌟 COLOR-CODED LEFT BORDER (PURPLE) 🌟 -->
+            <div class="tracking-card p-4 md:p-5 bg-white border border-slate-200 border-l-4 border-l-purple-500 rounded-xl flex flex-col gap-4 hover:shadow-md transition-shadow">
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="font-black text-slate-800 text-lg flex items-center gap-2">
+                            {{ $pass->employee->name ?? 'Unknown Employee' }}
+                            <!-- 🌟 TRACKING NUMBER BADGE 🌟 -->
+                            <span class="bg-purple-100 text-purple-700 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-purple-200">
+                                PS-{{ str_pad($pass->id, 4, '0', STR_PAD_LEFT) }}
+                            </span>
+                        </p>
+                        <p class="text-xs font-bold text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($pass->transaction_date)->format('M d, Y') }}</p>
+                        <p class="text-xs font-medium text-slate-600 mt-1 flex items-center gap-1"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> {{ Str::limit($pass->transaction_details, 50) }}</p>
+                    </div>
+                    <div class="shrink-0">
+                        @if(!empty($pass->dept_head_approved_at) || in_array(strtolower($pass->status), ['approved', 'approved_dept_head', 'pending_hrmo', 'pending_mayor', 'approved_hrmo'])) <span class="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">Fully Approved</span>
+                        @elseif(strtolower($pass->status) === 'declined' || strtolower($pass->status) === 'rejected') <span class="bg-rose-100 text-rose-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-rose-200 shadow-sm">Declined</span>
+                        @else <span class="bg-amber-100 text-amber-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">Pending (Dept Head)</span> @endif
+                    </div>
+                </div>
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5 pt-4 border-t border-slate-100 mt-1">
+                    <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+                        <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($pass->dept_head_approved_at) || in_array(strtolower($pass->status), ['approved', 'pending_hrmo']) ? 'text-emerald-600' : 'text-amber-500' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Dept Head Review</div>
+                    </div>
+                    <div class="shrink-0 flex justify-end gap-2">
+                        <a href="{{ route('employee.pass_slip.edit', $pass->id) }}" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
+                        </a>
+                        @php $isApproved = !empty($pass->dept_head_approved_at) || in_array(strtolower($pass->status), ['approved', 'pending_hrmo']); @endphp
+                        <a href="{{ route('pass_slips.print', $pass->id) }}" target="_blank" class="px-5 py-2.5 bg-purple-600 border border-purple-600 text-white hover:bg-purple-700 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> {{ $isApproved ? 'Print' : 'Review' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <p class="text-sm text-slate-400 italic text-center py-16">No pass slips to track right now.</p>
+        @endforelse
+
+        <!-- 🌟 PAGINATION LINKS FOR PASS SLIPS 🌟 -->
+        @if(isset($allPassSlips) && $allPassSlips->hasPages())
+            <div class="mt-4 pt-4 border-t border-slate-200">
+                {{ $allPassSlips->appends(request()->except('pass_page'))->links() }}
+            </div>
+        @endif
+    </div>
+
+    <!-- 3. CONTENT: LEAVES TRACKING -->
+    <div id="content-leave" class="tab-content hidden p-5 space-y-4 bg-slate-50">
+        @forelse($allLeaves ?? [] as $leave)
+            <!-- 🌟 COLOR-CODED LEFT BORDER (BLUE) 🌟 -->
+            <div class="tracking-card p-4 md:p-5 bg-white border border-slate-200 border-l-4 border-l-blue-500 rounded-xl flex flex-col gap-4 hover:shadow-md transition-shadow">
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="font-black text-slate-800 text-lg flex items-center gap-2">
+                            {{ $leave->employee->name ?? 'Unknown Employee' }}
+                            <!-- 🌟 TRACKING NUMBER BADGE 🌟 -->
+                            <span class="bg-blue-100 text-blue-700 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-blue-200">
+                                LV-{{ str_pad($leave->id, 4, '0', STR_PAD_LEFT) }}
+                            </span>
+                        </p>
+                        <p class="text-xs font-bold text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($leave->start_date)->format('M d, Y') }} @if($leave->end_date && $leave->start_date !== $leave->end_date) - {{ \Carbon\Carbon::parse($leave->end_date)->format('M d, Y') }} @endif</p>
+                        <span class="inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-slate-100 text-slate-600">{{ $leave->type ?? 'Unspecified Leave' }}</span>
+                    </div>
+                    <div class="shrink-0">
+                        @if(strtolower($leave->status) === 'approved' || !empty($leave->mayor_approved_at)) <span class="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">Fully Approved</span>
+                        @elseif(strtolower($leave->status) === 'declined' || strtolower($leave->status) === 'rejected') <span class="bg-rose-100 text-rose-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-rose-200 shadow-sm">Declined</span>
+                        @else <span class="bg-amber-100 text-amber-800 text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">{{ str_replace('_', ' ', $leave->status ?? 'In Progress') }}</span> @endif
+                    </div>
+                </div>
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5 pt-4 border-t border-slate-100 mt-1">
+                    <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+                        <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($leave->dept_head_approved_at) ? 'text-emerald-600' : 'text-amber-500' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Dept Head</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($leave->dept_head_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
+                        <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($leave->hrmo_approved_at) ? 'text-emerald-600' : (!empty($leave->dept_head_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> HRMO</div><div class="w-4 sm:w-8 h-[2px] rounded-full shrink-0 {{ !empty($leave->hrmo_approved_at) ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
+                        <div class="flex items-center gap-1 whitespace-nowrap {{ !empty($leave->mayor_approved_at) ? 'text-emerald-600' : (!empty($leave->hrmo_approved_at) ? 'text-amber-500' : 'text-slate-400') }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mayor</div>
+                    </div>
+                    <div class="shrink-0 flex justify-end gap-2">
+                        <a href="{{ route('employee.leave.edit', $leave->id) }}" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit
+                        </a>
+                        @php $isApproved = strtolower($leave->status) === 'approved' || !empty($leave->mayor_approved_at); @endphp
+                        <a href="{{ route('leaves.print', $leave->id) }}" target="_blank" class="px-5 py-2.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 font-bold rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> {{ $isApproved ? 'Print' : 'Review' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <p class="text-sm text-slate-400 italic text-center py-16">No leaves to track right now.</p>
+        @endforelse
+
+        <!-- 🌟 PAGINATION LINKS FOR LEAVES 🌟 -->
+        @if(isset($allLeaves) && $allLeaves->hasPages())
+            <div class="mt-4 pt-4 border-t border-slate-200">
+                {{ $allLeaves->appends(request()->except('leave_page'))->links() }}
+            </div>
+        @endif
+    </div>
+
+</div>
         </div>
     </div>
 
@@ -546,7 +619,7 @@
                 const errorAlert = document.getElementById('error-alert');
                 if (successAlert) { successAlert.style.opacity = '0'; setTimeout(() => successAlert.remove(), 500); }
                 if (errorAlert) { errorAlert.style.opacity = '0'; setTimeout(() => errorAlert.remove(), 500); }
-            }, 5000); 
+            }, 5000);
         });
     </script>
 </x-employee-layout>
