@@ -16,7 +16,7 @@
     </style>
 </head>
 <body class="bg-gray-200">
-    
+
     <!-- Print Button (Hides when actually printing) -->
    <div class="max-w-[8.27in] mx-auto mt-4 mb-2 flex justify-end print-hidden">
         <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2 font-bold">
@@ -29,7 +29,7 @@
 
     <!-- A4 Page Container -->
     <div class="w-[8.27in] mx-auto bg-white min-h-[10.69in] p-6 text-[10px] text-black shadow-lg">
-        
+
         <!-- Top Header -->
         <div class="flex justify-between items-end mb-2">
             <div>
@@ -43,7 +43,7 @@
 
         <!-- Main Two-Column Table Area -->
         <div class="flex border-t border-l border-r border-black">
-            
+
             <!-- LEFT SIDE (DTR Logs) -->
             <div class="w-[60%] border-r border-black flex flex-col">
                 <table class="w-full text-center border-collapse">
@@ -71,10 +71,10 @@
                             <td class="td-border border-l-0 text-left text-[8px] whitespace-nowrap {{ !empty($row['remark']) ? 'bg-yellow-100 font-bold' : '' }}">
                                 {{ $row['day_name'] }}, {{ \Carbon\Carbon::create(null, $month)->format('M') }} {{ str_pad($row['day_num'], 2, '0', STR_PAD_LEFT) }}
                             </td>
-                            
+
                             <!-- 🌟 DYNAMIC ROW SPAN LOGIC FOR TRAVEL & LEAVES 🌟 -->
                             @if(!empty($row['remark']) && empty($row['hide_remark']))
-                                
+
                                 <!-- Merged Middle Columns (Highlighted) -->
                                 <td colspan="7" rowspan="{{ $row['rowspan'] }}" class="td-border bg-yellow-100 text-center align-middle">
                                     <span class="font-black text-[10px] uppercase tracking-wide text-blue-900">
@@ -84,7 +84,7 @@
                                         <br><span class="text-[8px] font-bold text-slate-800">{{ $row['remark_details']['form_number'] }}</span>
                                     @endif
                                 </td>
-                                
+
                                 <!-- 🌟 THE FIX: Total Hrs Column for OB/Leave 🌟 -->
                                 <td rowspan="{{ $row['rowspan'] }}" class="td-border border-r-0 bg-yellow-100 text-center font-black text-blue-800 align-middle">
                                     {{ $row['rowspan'] * 8 }}:00
@@ -93,7 +93,7 @@
                             @elseif(empty($row['hide_remark']))
                                 <!-- NORMAL TIME RENDERING (With Pass Slips) -->
                                 <td class="td-border text-[7px]">{{ (!empty($row['pass_slip'])) ? 'OB/LV' : 'REG' }}</td>
-                                
+
                                 <td class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['am_in'] ? 'font-bold text-[6px]' : '' }}">
                                     @if(isset($row['pass_slip']) && $row['pass_slip']['am_in']) PASS SLIP @else {{ $row['am_in'] ?: '' }} @endif
                                 </td>
@@ -106,10 +106,10 @@
                                 <td class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['pm_out'] ? 'font-bold text-[6px]' : '' }}">
                                     @if(isset($row['pass_slip']) && $row['pass_slip']['pm_out']) PASS SLIP @else {{ $row['pm_out'] ?: '' }} @endif
                                 </td>
-                                
+
                                 <td class="td-border text-[8px] text-red-600 font-bold">{{ $row['late'] }}</td>
                                 <td class="td-border text-[8px] text-orange-600 font-bold">{{ $row['early'] }}</td>
-                                
+
                                 <td class="td-border text-[8px] border-r-0 font-bold text-blue-800">
                                     @if(isset($row['pass_slip']))
                                         <span class="text-[6px] text-black block leading-tight font-bold whitespace-nowrap mb-0.5">
@@ -153,6 +153,7 @@
                                         <span class="text-[8px] uppercase text-gray-600">{{ $row['remark_details']['route'] ?? '' }}</span>
                                     @elseif(!empty($row['pass_slip']))
                                         <span class="font-bold">PASS SLIP (Official Business)</span><br>
+                                        <span class="font-bold">{{ $row['pass_slip']['transaction_details'] ?? '' }}</span><br>
                                         <span class="text-[8px] font-bold text-gray-800">Time: {{ $row['pass_slip']['time_from'] }} - {{ $row['pass_slip']['time_to'] }}</span>
                                     @endif
                                 </td>
@@ -186,14 +187,14 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="text-center relative mt-6">
                         <div class="border-b border-black w-48 mx-auto"></div>
                         <div class="font-bold mt-1 uppercase">{{ $employee->name }}</div>
                         <div class="text-[8px]">Employee's Signature</div>
                     </div>
                 </div>
-                
+
                 <!-- Right Side (Lates, Undertime, Absences) -->
                 <div class="w-[30%] pl-2 pt-1">
                     <div class="flex justify-between font-bold text-red-600 text-center text-xs">
@@ -212,12 +213,12 @@
             @php
                 // Get all company_ids of users who have the 'department_head' role
                 $headCompanyIds = \App\Models\User::where('role', 'department_head')->pluck('company_id');
-                
+
                 // Find the specific employee in this exact department who holds the department head role
                 $deptHead = \App\Models\Employee::where('department', $employee->department)
                     ->whereIn('company_id', $headCompanyIds)
                     ->first();
-                    
+
                 // Set fallback names just in case a department doesn't have an active head yet
                 $dynamicHeadName = $deptHead ? $deptHead->name : 'ACTING DEPARTMENT HEAD';
                 $dynamicDepartment = $employee->department ? $employee->department : "MAYOR'S OFFICE";

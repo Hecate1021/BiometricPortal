@@ -8,18 +8,18 @@ use App\Models\Employee;
 
 class PassSlipController extends Controller
 {
-    
+
     public function edit($id)
     {
         $passSlip = \App\Models\PassSlip::findOrFail($id);
         return view('pass_slips.edit', compact('passSlip'));
     }
-    
+
    public function store(Request $request)
     {
         // 1. Validate the incoming data (Notice we added employee_id here)
         $validated = $request->validate([
-            'employee_id'          => 'nullable|exists:employees,id', // 🌟 NEW: Accept HR's dropdown choice
+            'employee_id'          => 'nullable|exists:employees,id', // 🌟 Accept HR's dropdown choice
             'transaction_details'  => 'required|string',
             'transaction_date'     => 'required|date',
             'time_from'            => 'required',
@@ -44,16 +44,22 @@ class PassSlipController extends Controller
         $validated['unlogged_time_in_pm']  = $request->has('unlogged_time_in_pm');
         $validated['unlogged_time_out_pm'] = $request->has('unlogged_time_out_pm');
 
+        // 🌟 4. NEW: FORCE AUTOMATIC APPROVAL 🌟
+        $validated['status']                = 'approved';
+        $validated['dept_head_approved_at'] = now();
+        $validated['hrmo_approved_at']      = now();
+        $validated['mayor_approved_at']     = now();
+
         // Save to Database
         \App\Models\PassSlip::create($validated);
 
-        return redirect()->back()->with('success', 'Pass Slip filed successfully!');
+        return redirect()->back()->with('success', 'Pass Slip filed and automatically approved!');
     }
-    
+
     public function print($id)
     {
         $passSlip = \App\Models\PassSlip::with('employee')->findOrFail($id);
-        
+
         // Check if the employee belongs to HRMO
         $department = strtolower($passSlip->employee->department ?? '');
         $isHrmo = str_contains($department, 'hrmo') || str_contains($department, 'human resource');
@@ -67,14 +73,14 @@ class PassSlipController extends Controller
                 $deptHeadName = $employee->name;
             }
         }
-        
+
         return view('pass_slips.print', compact('passSlip', 'deptHeadName', 'isHrmo'));
     }
-    
+
     public function update(Request $request, $id)
     {
         $pass = \App\Models\PassSlip::findOrFail($id);
-        
+
         $validated = $request->validate([
             'transaction_details'  => 'required|string|max:500',
             'transaction_date'     => 'required|date',

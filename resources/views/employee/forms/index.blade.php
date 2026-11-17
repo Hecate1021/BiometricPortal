@@ -1,6 +1,6 @@
 <x-employee-layout>
     <div class="max-w-[90rem] mx-auto p-4 sm:p-6 lg:p-10">
-        
+
         <!-- Alerts -->
         @if(session('success'))
         <div id="success-alert" class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl shadow-sm transition-opacity duration-500 flex items-center gap-3" role="alert">
@@ -22,7 +22,7 @@
             </div>
         </div>
         @endif
-        
+
         <!-- Header -->
         <div class="mb-6 sm:mb-8">
             <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800">File a Request</h1>
@@ -70,7 +70,7 @@
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             Your Recent Submissions
         </h3>
-        
+
         <!-- Folder Tabs Header -->
         <div class="flex items-end px-2 sm:px-6">
             <!-- Travel Tab (Active by default) -->
@@ -85,7 +85,7 @@
 
         <!-- Main Content Box (Connected to active tab) -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm relative z-0 overflow-hidden mb-10 min-h-[300px]">
-            
+
             <!-- 1. Travel Orders List -->
             <div id="content-travel" class="tab-content block overflow-x-auto w-full">
                 <table class="w-full text-sm text-left min-w-[450px]">
@@ -93,11 +93,11 @@
                         @forelse($recentTravels as $travel)
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-4 sm:px-8 py-5 text-slate-800 font-bold whitespace-nowrap w-1">
-                                    {{ \Carbon\Carbon::parse($travel->start_date)->format('M d') }} - 
+                                    {{ \Carbon\Carbon::parse($travel->start_date)->format('M d') }} -
                                     {{ \Carbon\Carbon::parse($travel->end_date)->format('M d') }}
                                 </td>
                                 <td class="px-4 sm:px-6 py-5 text-emerald-600 font-medium whitespace-nowrap sm:whitespace-normal">{{ $travel->purpose }}</td>
-                                
+
                                 <td class="px-2 sm:px-4 py-5 text-right whitespace-nowrap w-1">
                                     @if(($travel->status ?? 'pending') === 'approved')
                                         <span class="px-3 py-1.5 bg-emerald-100 text-emerald-700 text-[10px] tracking-wider uppercase rounded-full font-bold">Approved</span>
@@ -137,10 +137,10 @@
                                     {{ \Carbon\Carbon::parse($pass->transaction_date)->format('M d, Y') }}
                                 </td>
                                 <td class="px-4 sm:px-6 py-5 text-purple-600 font-medium whitespace-nowrap sm:whitespace-normal">{{ $pass->transaction_details }}</td>
-                                
+
                                 <td class="px-2 sm:px-4 py-5 text-right whitespace-nowrap w-1">
                                     @php $status = $pass->status ?? 'pending'; @endphp
-                                    
+
                                     @if(in_array($status, ['approved', 'approved_dept_head', 'pending_hrmo', 'pending_mayor', 'approved_hrmo']))
                                         <span class="px-3 py-1.5 bg-emerald-100 text-emerald-700 text-[10px] tracking-wider uppercase rounded-full font-bold">Approved</span>
                                     @elseif(str_contains($status, 'declined'))
@@ -170,11 +170,11 @@
                         @forelse($recentLeaves as $leave)
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-4 sm:px-8 py-5 text-slate-800 font-bold whitespace-nowrap w-1">
-                                    {{ \Carbon\Carbon::parse($leave->start_date)->format('M d') }} - 
+                                    {{ \Carbon\Carbon::parse($leave->start_date)->format('M d') }} -
                                     {{ \Carbon\Carbon::parse($leave->end_date)->format('M d') }}
                                 </td>
                                 <td class="px-4 sm:px-6 py-5 text-blue-600 font-medium whitespace-nowrap sm:whitespace-normal">{{ $leave->type }}</td>
-                                
+
                                 <td class="px-2 sm:px-4 py-5 text-right whitespace-nowrap w-1">
                                     @if(($leave->status ?? 'pending') === 'approved')
                                         <span class="px-3 py-1.5 bg-emerald-100 text-emerald-700 text-[10px] tracking-wider uppercase rounded-full font-bold">Approved</span>
@@ -204,7 +204,7 @@
                 </table>
             </div>
         </div>
-        
+
     </div>
 
     <!-- ============================================== -->
@@ -219,11 +219,11 @@
                 </h3>
                 <button type="button" onclick="closeModal('passSlipModal')" class="text-slate-400 hover:text-slate-600 focus:outline-none p-1">&times;</button>
             </div>
-            
+
             <div class="overflow-y-auto p-4 sm:p-6 flex-1">
                 <form id="passSlipForm" action="{{ route('employee.pass_slip.store') ?? '#' }}" method="POST" class="space-y-4 sm:space-y-5">
                     @csrf
-                    
+
                     <!-- Pre-filled Employee Information -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 sm:space-y-4">
                         <div>
@@ -244,15 +244,37 @@
 
                     <!-- Transaction Details -->
                     <div>
-                        <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Specify the OFFICIAL BUSINESS transaction</label>
-                        <textarea name="transaction_details" rows="2" required class="w-full text-xs sm:text-sm border-slate-300 rounded-lg shadow-sm p-3 focus:ring-purple-500 focus:border-purple-500" placeholder="Details of business..."></textarea>
+                        <div class="mb-1.5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                Official Business Details
+                            </label>
+                            <span class="text-[9px] sm:text-[10px] font-medium text-slate-400">
+                                * Include complete purpose and address
+                            </span>
+                        </div>
+                        <textarea
+                            name="transaction_details"
+                            rows="3"
+                            required
+                            class="w-full text-xs sm:text-sm bg-white border border-slate-300 text-slate-700 rounded-xl shadow-sm p-3.5 transition-all duration-200 ease-in-out focus:bg-purple-50/30 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 outline-none placeholder:text-slate-400 placeholder:italic"
+                            placeholder="e.g., Attending the Quarterly Meeting at    Lake Sebu..."
+                        ></textarea>
                     </div>
 
                     <!-- Date & Time -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
+                       <div>
                             <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Date of Official Business Transaction</label>
-                            <input type="date" name="transaction_date" required class="w-full text-xs sm:text-sm border-slate-300 rounded-lg shadow-sm p-2 sm:p-2.5 focus:ring-purple-500 focus:border-purple-500">
+
+                            <input type="date"
+                                   name="transaction_date"
+                                   required
+                                   onclick="lockPassSlipDates(this)"
+                                   onfocus="lockPassSlipDates(this)"
+                                   class="w-full text-xs sm:text-sm border-slate-300 rounded-lg shadow-sm p-2 sm:p-2.5 focus:ring-purple-500 focus:border-purple-500">
+
+                            <!-- 🌟 UPDATED NOTE 🌟 -->
+                            <p class="text-[9px] sm:text-[10px] mt-1 text-slate-400 font-medium">* Can be filed up to 1 day late (yesterday), today, or tomorrow.</p>
                         </div>
                         <div class="p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-100">
                             <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Inclusive Time</label>
@@ -265,10 +287,40 @@
                         </div>
                     </div>
 
+                   <script>
+    function lockPassSlipDates(input) {
+        // 1. Get exact local date
+        let today = new Date();
+
+        // Helper to format as YYYY-MM-DD
+        function formatDate(dateObj) {
+            let yyyy = dateObj.getFullYear();
+            let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            let dd = String(dateObj.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // 🌟 2. Set min date (YESTERDAY - allows 1 day late filing)
+        let yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+        let minDate = formatDate(yesterday);
+
+        // 🌟 3. Set max date (TOMORROW - allows advance filing)
+        // (Change 'today.getDate() + 1' to 'today.getDate()' if you want to block tomorrow)
+        let tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 0);
+        let maxDate = formatDate(tomorrow);
+
+        // 4. Force the attributes onto the input
+        input.setAttribute('min', minDate);
+        input.setAttribute('max', maxDate);
+    }
+</script>
+
                     <!-- Unlogged Attendance (Biometrics) -->
                     <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
                         <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Unlogged Attendance in Biometric System</label>
-                        
+
                         <!-- Responsive Checkbox Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-xs sm:text-sm text-slate-700 font-medium mb-4">
                             <label class="flex items-center gap-2 cursor-pointer hover:text-purple-700">
@@ -288,7 +340,7 @@
                                 <span>TIME Out <span class="text-[10px] sm:text-xs text-slate-500">(5:00 PM)</span></span>
                             </label>
                         </div>
-                        
+
                         <div class="pt-3 border-t border-slate-200">
                             <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Number of unlogged Attendance in Biometric System</label>
                             <input type="number" name="unlogged_count" min="0" max="4" class="w-full sm:w-24 text-xs sm:text-sm border-slate-300 rounded-lg shadow-sm p-2 focus:ring-purple-500 focus:border-purple-500">
@@ -303,7 +355,7 @@
 
                 </form>
             </div>
-            
+
             <!-- Footer Buttons -->
             <div class="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 shrink-0">
                 <button type="button" onclick="closeModal('passSlipModal')" class="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors order-2 sm:order-1">Cancel</button>
@@ -324,28 +376,28 @@
                 </h3>
                 <button type="button" onclick="closeModal('travelModal')" class="text-slate-400 hover:text-slate-600 focus:outline-none p-1">&times;</button>
             </div>
-            
+
             <form action="{{ route('employee.travel.store') }}" method="POST" class="p-4 sm:p-6 space-y-4 sm:space-y-5">
                 @csrf
-                
+
                 <!-- 🌟 ADDED: Hidden Employee ID so the database knows who this belongs to 🌟 -->
                 <input type="hidden" name="employee_id" value="{{ $employee->id }}">
-                
+
                 <!-- 🌟 UPDATED: Sequential Database ID Display 🌟 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         @php
                             // Get current Year and Month
                             $yearMonth = \Carbon\Carbon::now()->format('Y-m');
-                            
+
                             // Predict the NEXT database ID
                             $lastTravel = \App\Models\TravelOrder::orderBy('id', 'desc')->first();
                             $nextId = $lastTravel ? $lastTravel->id + 1 : 1;
-                            
+
                             // Format: TO-2026-09-0001
                             $predictedToNumber = 'TO-' . $yearMonth . '-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
                         @endphp
-                        
+
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">T.O. Number</label>
                         <input type="text" value="{{ $predictedToNumber }}" readonly class="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-black tracking-widest rounded-lg shadow-sm p-2.5 sm:p-3 focus:outline-none cursor-not-allowed" title="This number will be officially locked in upon submission.">
                     </div>
@@ -422,7 +474,7 @@
                 </h3>
                 <button type="button" onclick="closeModal('leaveModal')" class="text-slate-400 hover:text-slate-600 focus:outline-none p-1">&times;</button>
             </div>
-            
+
             <div class="overflow-y-auto p-4 sm:p-6 md:p-8 flex-1">
                 <form id="leaveForm" action="{{ route('employee.leave.store') }}" method="POST" class="space-y-6">
                     @csrf
@@ -444,9 +496,9 @@
 
                     <div class="border-t border-slate-200 pt-5 sm:pt-6">
                         <h3 class="font-black text-slate-800 text-xs sm:text-sm tracking-wide mb-4 sm:mb-5">6. DETAILS OF APPLICATION</h3>
-                        
+
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
-                            
+
                             <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-3 sm:mb-4 uppercase tracking-wide">6.A Type of Leave</label>
                                 <div class="space-y-2.5 sm:space-y-3 text-xs sm:text-sm text-slate-600 font-medium">
@@ -463,7 +515,7 @@
                                     <label class="flex items-start cursor-pointer hover:text-slate-900 transition-colors"><input type="radio" name="leave_type" value="Special Leave for Women" class="mt-0.5 sm:mt-1 mr-2 sm:mr-3 text-blue-600 focus:ring-blue-500"> Special Leave for Women (RA 9710)</label>
                                     <label class="flex items-start cursor-pointer hover:text-slate-900 transition-colors"><input type="radio" name="leave_type" value="Special Emergency Leave" class="mt-0.5 sm:mt-1 mr-2 sm:mr-3 text-blue-600 focus:ring-blue-500"> Special Emergency (Calamity) Leave</label>
                                     <label class="flex items-start cursor-pointer hover:text-slate-900 transition-colors"><input type="radio" name="leave_type" value="Adoption Leave" class="mt-0.5 sm:mt-1 mr-2 sm:mr-3 text-blue-600 focus:ring-blue-500"> Adoption Leave (R.A. No. 8552)</label>
-                                    
+
                                     <div class="flex items-center sm:items-end mt-3 sm:mt-4 pt-3 border-t border-slate-100">
                                         <span class="mr-2 sm:mr-3 font-bold text-slate-700 whitespace-nowrap">Others:</span>
                                         <input type="text" name="leave_type_others" class="flex-1 min-w-0 text-xs sm:text-sm bg-transparent border-0 border-b-2 border-slate-300 focus:ring-0 focus:border-blue-500 py-1 px-1 sm:px-2 transition-colors placeholder:text-slate-400" placeholder="Specify here...">
@@ -473,7 +525,7 @@
 
                             <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-3 sm:mb-4 uppercase tracking-wide">6.B Details of Leave</label>
-                                
+
                                 <div class="space-y-4 sm:space-y-6 text-xs sm:text-sm text-slate-600 font-medium">
                                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                         <span class="block mb-2 font-bold text-slate-700 text-[11px] sm:text-xs">Vacation/Special Privilege Leave:</span>
@@ -518,12 +570,12 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mt-5 sm:mt-6">
                             <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">6.C Working Days Applied For</label>
                                 <input type="number" name="working_days" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg shadow-sm px-3 py-2 sm:py-2.5 mb-4 sm:mb-5 focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="e.g. 5" required>
-                                
+
                                 <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Inclusive Dates</label>
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                                     <input type="date" name="start_date" class="w-full sm:w-1/2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg shadow-sm px-3 py-2 sm:py-2.5 focus:ring-2 focus:ring-blue-500 transition-colors" required>
@@ -543,7 +595,7 @@
                     </div>
                 </form>
             </div>
-            
+
             <div class="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 shrink-0">
                 <button type="button" onclick="closeModal('leaveModal')" class="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors order-2 sm:order-1">Cancel</button>
                 <button type="button" onclick="document.getElementById('leaveForm').submit();" class="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold bg-blue-700 text-white rounded-xl hover:bg-blue-800 shadow-md transition-colors order-1 sm:order-2">Submit Leave Application</button>
@@ -557,16 +609,16 @@
         setTimeout(() => {
             const successAlert = document.getElementById('success-alert');
             const errorAlert = document.getElementById('error-alert');
-            
+
             if (successAlert) {
                 successAlert.style.opacity = '0';
-                setTimeout(() => successAlert.remove(), 500); 
+                setTimeout(() => successAlert.remove(), 500);
             }
             if (errorAlert) {
                 errorAlert.style.opacity = '0';
-                setTimeout(() => errorAlert.remove(), 500); 
+                setTimeout(() => errorAlert.remove(), 500);
             }
-        }, 5000); 
+        }, 5000);
 
         // Modal Functions
         function openModal(modalID) {

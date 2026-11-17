@@ -463,10 +463,14 @@ class DtrController extends Controller
 
             if ($passSlip) {
                 $passSlipData = [
-                    'time_from' => Carbon::parse($passSlip->time_from)->format('h:i A'),
-                    'time_to'   => Carbon::parse($passSlip->time_to)->format('h:i A'),
-                    'am_in'     => $passSlip->unlogged_time_in_am, 'am_out' => $passSlip->unlogged_time_out_am,
-                    'pm_in'     => $passSlip->unlogged_time_in_pm, 'pm_out' => $passSlip->unlogged_time_out_pm,
+                    'time_from'           => \Carbon\Carbon::parse($passSlip->time_from)->format('h:i A'),
+                    'time_to'             => \Carbon\Carbon::parse($passSlip->time_to)->format('h:i A'),
+                    'am_in'               => $passSlip->unlogged_time_in_am,
+                    'am_out'              => $passSlip->unlogged_time_out_am,
+                    'pm_in'               => $passSlip->unlogged_time_in_pm,
+                    'pm_out'              => $passSlip->unlogged_time_out_pm,
+                    // 🌟 ADD THIS LINE:
+                    'transaction_details' => $passSlip->transaction_details,
                 ];
             }
 
