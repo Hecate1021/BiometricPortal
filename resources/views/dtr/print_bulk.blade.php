@@ -55,6 +55,13 @@
             text-align: center;
         }
 
+.weekend-row,
+.weekend-row td {
+    background-color: #fee2e2 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
         /* 🌟 UPDATED COVER PAGE CSS (BIGGER WATERMARK & TEXT) 🌟 */
         .cover-page {
             position: relative;
@@ -223,103 +230,95 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($data['dtr'] as $row)
-                                    @php
-                                        $isWeekend =
-                                            (!empty($row['is_weekend']) ||
-                                                in_array($row['day_name'] ?? '', ['Sat', 'Sun'])) &&
-                                            empty($row['remark']);
-                                    @endphp
-                                    <tr
-                                        style="{{ $isWeekend ? 'background-color: #dc2626 !important; color: #ffffff !important;' : '' }}">
-                                        <!-- 🌟 HIGHLIGHT LOGIC APPLIED TO DATE 🌟 -->
-                                        <td class="td-border border-l-0 text-left text-[8px] whitespace-nowrap {{ !empty($row['remark']) ? 'bg-yellow-100 text-black font-bold' : ($isWeekend ? 'font-bold' : '') }}"
-                                            style="{{ $isWeekend ? 'background-color: #dc2626 !important; color: #ffffff !important;' : '' }}">
-                                            {{ $row['day_name'] }},
-                                            {{ \Carbon\Carbon::create(null, $data['month'])->format('M') }}
-                                            {{ str_pad($row['day_num'], 2, '0', STR_PAD_LEFT) }}
-                                        </td>
+    @foreach ($data['dtr'] as $row)
+        @php
+            $isWeekend =
+                (!empty($row['is_weekend']) ||
+                    in_array(strtolower($row['day_name'] ?? ''), ['sat', 'sun', 'saturday', 'sunday'])) &&
+                empty($row['remark']);
+        @endphp
+        <tr class="{{ $isWeekend ? 'weekend-row bg-red-100' : '' }}"
+            style="{{ $isWeekend ? 'background-color: #fee2e2 !important;' : '' }}">
+            <!-- 🌟 HIGHLIGHT LOGIC APPLIED TO DATE 🌟 -->
+            <td class="td-border border-l-0 text-left text-[8px] whitespace-nowrap {{ !empty($row['remark']) ? 'bg-yellow-100 text-black font-bold' : ($isWeekend ? 'bg-red-100 font-bold text-red-900' : '') }}"
+                style="{{ $isWeekend ? 'background-color: #fee2e2 !important;' : '' }}">
+                {{ $row['day_name'] }},
+                {{ \Carbon\Carbon::create(null, $data['month'])->format('M') }}
+                {{ str_pad($row['day_num'], 2, '0', STR_PAD_LEFT) }}
+            </td>
 
-                                        <!-- 🌟 DYNAMIC ROW SPAN LOGIC FOR TRAVEL & LEAVES 🌟 -->
-                                        @if (!empty($row['remark']) && empty($row['hide_remark']))
-                                            <!-- Merged Middle Columns (Highlighted) -->
-                                            <td colspan="7" rowspan="{{ $row['rowspan'] }}"
-                                                class="td-border bg-yellow-100 text-center align-middle">
-                                                <span
-                                                    class="font-black text-[10px] uppercase tracking-wide text-blue-900">
-                                                    {{ $row['remark'] === 'Executive' ? 'OFFICIAL BUSINESS' : $row['remark'] }}
-                                                </span>
-                                                @if (!empty($row['remark_details']['form_number']))
-                                                    <br><span
-                                                        class="text-[8px] font-bold text-slate-800">{{ $row['remark_details']['form_number'] }}</span>
-                                                @endif
-                                            </td>
+            <!-- 🌟 DYNAMIC ROW SPAN LOGIC FOR TRAVEL & LEAVES 🌟 -->
+            @if (!empty($row['remark']) && empty($row['hide_remark']))
+                <!-- Merged Middle Columns (Highlighted) -->
+                <td colspan="7" rowspan="{{ $row['rowspan'] }}"
+                    class="td-border bg-yellow-100 text-center align-middle">
+                    <span class="font-black text-[10px] uppercase tracking-wide text-blue-900">
+                        {{ $row['remark'] === 'Executive' ? 'OFFICIAL BUSINESS' : $row['remark'] }}
+                    </span>
+                    @if (!empty($row['remark_details']['form_number']))
+                        <br><span class="text-[8px] font-bold text-slate-800">{{ $row['remark_details']['form_number'] }}</span>
+                    @endif
+                </td>
 
-                                            <!-- Empty Total Hrs Column -->
-                                            <td rowspan="{{ $row['rowspan'] }}"
-                                                class="td-border border-r-0 bg-yellow-100 text-center font-bold text-gray-500 align-middle">
-                                                --
-                                            </td>
-                                        @elseif(empty($row['hide_remark']))
-                                            <!-- NORMAL TIME RENDERING (With Pass Slips and Exemptions) -->
-                                            <td class="td-border text-[7px]">
-                                                {{ !empty($row['pass_slip']) ? 'OB/LV' : 'REG' }}</td>
+                <!-- Empty Total Hrs Column -->
+                <td rowspan="{{ $row['rowspan'] }}"
+                    class="td-border border-r-0 bg-yellow-100 text-center font-bold text-gray-500 align-middle">
+                    --
+                </td>
+            @elseif(empty($row['hide_remark']))
+                <!-- NORMAL TIME RENDERING (With Pass Slips and Exemptions) -->
+                <td class="td-border text-[7px]">
+                    {{ !empty($row['pass_slip']) ? 'OB/LV' : 'REG' }}
+                </td>
 
-                                            <td
-                                                class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['am_in'] ? 'font-bold text-[6px]' : '' }} {{ $row['am_in'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
-                                                @if (isset($row['pass_slip']) && $row['pass_slip']['am_in'])
-                                                    PASS SLIP
-                                                @else
-                                                    {{ $row['am_in'] ?: '' }}
-                                                @endif
-                                            </td>
-                                            <td
-                                                class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['am_out'] ? 'font-bold text-[6px] ' . ($isWeekend ? 'text-white' : 'text-black') : ($isWeekend ? 'text-white' : 'text-gray-500') }} {{ $row['am_out'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
-                                                @if (isset($row['pass_slip']) && $row['pass_slip']['am_out'])
-                                                    PASS SLIP
-                                                @else
-                                                    {{ $row['am_out'] ?: '' }}
-                                                @endif
-                                            </td>
-                                            <td
-                                                class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['pm_in'] ? 'font-bold text-[6px] ' . ($isWeekend ? 'text-white' : 'text-black') : ($isWeekend ? 'text-white' : 'text-gray-500') }} {{ $row['pm_in'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
-                                                @if (isset($row['pass_slip']) && $row['pass_slip']['pm_in'])
-                                                    PASS SLIP
-                                                @else
-                                                    {{ $row['pm_in'] ?: '' }}
-                                                @endif
-                                            </td>
-                                            <td
-                                                class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['pm_out'] ? 'font-bold text-[6px]' : '' }} {{ $row['pm_out'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
-                                                @if (isset($row['pass_slip']) && $row['pass_slip']['pm_out'])
-                                                    PASS SLIP
-                                                @else
-                                                    {{ $row['pm_out'] ?: '' }}
-                                                @endif
-                                            </td>
+                <td class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['am_in'] ? 'font-bold text-[6px]' : '' }} {{ $row['am_in'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
+                    @if (isset($row['pass_slip']) && $row['pass_slip']['am_in'])
+                        PASS SLIP
+                    @else
+                        {{ $row['am_in'] ?: '' }}
+                    @endif
+                </td>
+                <td class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['am_out'] ? 'font-bold text-[6px] text-black' : 'text-gray-500' }} {{ $row['am_out'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
+                    @if (isset($row['pass_slip']) && $row['pass_slip']['am_out'])
+                        PASS SLIP
+                    @else
+                        {{ $row['am_out'] ?: '' }}
+                    @endif
+                </td>
+                <td class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['pm_in'] ? 'font-bold text-[6px] text-black' : 'text-gray-500' }} {{ $row['pm_in'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
+                    @if (isset($row['pass_slip']) && $row['pass_slip']['pm_in'])
+                        PASS SLIP
+                    @else
+                        {{ $row['pm_in'] ?: '' }}
+                    @endif
+                </td>
+                <td class="td-border text-[8px] {{ isset($row['pass_slip']) && $row['pass_slip']['pm_out'] ? 'font-bold text-[6px]' : '' }} {{ $row['pm_out'] === 'EXEMPT' ? 'font-bold text-blue-700 text-[6px] bg-blue-50/50' : '' }}">
+                    @if (isset($row['pass_slip']) && $row['pass_slip']['pm_out'])
+                        PASS SLIP
+                    @else
+                        {{ $row['pm_out'] ?: '' }}
+                    @endif
+                </td>
 
-                                            <td
-                                                class="td-border text-[8px] font-bold {{ $isWeekend ? 'text-white' : 'text-red-600' }}">
-                                                {{ $row['late'] }}</td>
-                                            <td
-                                                class="td-border text-[8px] font-bold {{ $isWeekend ? 'text-white' : 'text-orange-600' }}">
-                                                {{ $row['early'] }}</td>
+                <td class="td-border text-[8px] font-bold text-red-600">
+                    {{ $row['late'] }}
+                </td>
+                <td class="td-border text-[8px] font-bold text-orange-600">
+                    {{ $row['early'] }}
+                </td>
 
-                                            <td
-                                                class="td-border text-[8px] border-r-0 font-bold {{ $isWeekend ? 'text-white' : 'text-blue-800' }}">
-                                                @if (isset($row['pass_slip']))
-                                                    <span
-                                                        class="text-[6px] block leading-tight font-bold whitespace-nowrap mb-0.5 {{ $isWeekend ? 'text-white' : 'text-black' }}">
-                                                        OB: {{ $row['pass_slip']['time_from'] }} -
-                                                        {{ $row['pass_slip']['time_to'] }}
-                                                    </span>
-                                                @endif
-                                                {{ $row['total_hrs'] }}
-                                            </td>
-                                        @endif
-                                    </tr>
-                                @endforeach
-                            </tbody>
+                <td class="td-border text-[8px] border-r-0 font-bold text-blue-800">
+                    @if (isset($row['pass_slip']))
+                        <span class="text-[6px] block leading-tight font-bold whitespace-nowrap mb-0.5 text-black">
+                            OB: {{ $row['pass_slip']['time_from'] }} - {{ $row['pass_slip']['time_to'] }}
+                        </span>
+                    @endif
+                    {{ $row['total_hrs'] }}
+                </td>
+            @endif
+        </tr>
+    @endforeach
+</tbody>
                         </table>
                     </div>
 
