@@ -379,16 +379,25 @@ class DtrController extends Controller
 
         $department = \App\Models\Department::where('name', $employee->department)->first();
 
-        // 🌟 DYNAMIC PUNCH OVERRIDE
-        $jobTitle = strtolower($employee->position ?? '');
+       // 🌟 DYNAMIC PUNCH OVERRIDE
+$jobTitle = strtolower($employee->position ?? '');
 
-        if (str_contains($jobTitle, 'nurse') || str_contains($jobTitle, 'guard') || str_contains($jobTitle, 'security')) {
-            $requiredPunches = 2;
-        } elseif (isset($employee->required_punches)) {
-            $requiredPunches = $employee->required_punches;
-        } else {
-            $requiredPunches = $department ? $department->required_punches : 4;
-        }
+$twoPunchRoles = [
+    'nurse',
+    'nursing',
+    'guard',
+    'security',
+    'nutritionist',
+    'medical technologist',
+];
+
+if (\Illuminate\Support\Str::contains($jobTitle, $twoPunchRoles)) {
+    $requiredPunches = 2;
+} elseif (isset($employee->required_punches)) {
+    $requiredPunches = $employee->required_punches;
+} else {
+    $requiredPunches = $department ? $department->required_punches : 4;
+}
 
         $rawLogs = \App\Models\AttendanceLog::where('employee_id', $employee->id)
             ->whereBetween('punch_time', [$startDate->copy()->subDay(), $endDate->copy()->addDay()])
